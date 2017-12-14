@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+  db:
+    image: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: "it-test-pw"
+      POSTGRES_USER: "it-test-user"
+      POSTGRES_DB: "it-test-db"
+    volumes:
+      - ./postgresql/ssl/root.crt:/var/lib/pgsql/data/root.crt
+      - ./postgresql/ssl/server.crt:/var/lib/pgsql/data/server.crt
+      - ./postgresql/ssl/server.key:/var/lib/pgsql/data/server.key
+      - ./postgresql/postgresql.conf:/var/lib/pgsql/data/postgresql.conf
