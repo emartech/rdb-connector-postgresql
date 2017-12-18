@@ -1,7 +1,7 @@
 version: '3'
 
 services:
-  rdb-connector-posgresql:
+  rdb-connector-postgresql:
     build:
       context: .
       dockerfile: Dockerfile
@@ -10,11 +10,11 @@ services:
       - db
 
   db:
-    image: postgres
+    image: postgres:9.5
     environment:
-      - POSTGRES_PASSWORD: "it-test-pw"
-      - POSTGRES_USER: "it-test-user"
-      - POSTGRES_DB: "it-test-db"
+      POSTGRES_PASSWORD: "it-test-pw"
+      POSTGRES_USER: "it-test-user"
+      POSTGRES_DB: "it-test-db"
     cached: true
     volumes:
       - ./postgresql/ssl/root.crt:/var/lib/pgsql/data/root.crt
