@@ -4,7 +4,7 @@ import com.emarsys.rdb.connector.common.defaults.SqlWriter.createEscapeQuoter
 import com.emarsys.rdb.connector.common.defaults.{DefaultSqlWriters, SqlWriter}
 import com.emarsys.rdb.connector.common.models.SimpleSelect._
 
-object PostgeSqlWriters extends DefaultSqlWriters {
+object PostgreSqlWriters extends DefaultSqlWriters {
   override implicit lazy val tableNameWriter: SqlWriter[TableName] = SqlWriter.createTableNameWriter("\"", "\\")
   override implicit lazy val fieldNameWriter: SqlWriter[FieldName] = postgreSqlCreateFieldNameWriter("\"", "\\")
 

@@ -12,7 +12,7 @@ import scala.annotation.tailrec
 trait PostgreSqlRawSelect extends PostgreSqlStreamingQuery {
   self: PostgreSqlConnector =>
 
-  import PostgeSqlWriters._
+  import PostgreSqlWriters._
   import com.emarsys.rdb.connector.common.defaults.SqlWriter._
 
   override def rawSelect(rawSql: String, limit: Option[Int]): ConnectorResponse[Source[Seq[String], NotUsed]] = {

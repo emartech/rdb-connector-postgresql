@@ -7,7 +7,7 @@ import com.emarsys.rdb.connector.common.models.Errors.ErrorWithMessage
 import com.emarsys.rdb.connector.common.models.SimpleSelect._
 import slick.jdbc.PostgresProfile.api._
 import com.emarsys.rdb.connector.common.defaults.SqlWriter._
-import PostgeSqlWriters._
+import PostgreSqlWriters._
 import com.emarsys.rdb.connector.common.models.DataManipulation.FieldValueWrapper.NullValue
 
 import scala.concurrent.Future

@@ -6,7 +6,7 @@ import com.emarsys.rdb.connector.common.ConnectorResponse
 import com.emarsys.rdb.connector.common.models.SimpleSelect
 
 import com.emarsys.rdb.connector.common.defaults.SqlWriter._
-import PostgeSqlWriters._
+import PostgreSqlWriters._
 
 trait PostgreSqlSimpleSelect extends PostgreSqlStreamingQuery {
   self: PostgreSqlConnector =>
