@@ -20,6 +20,7 @@ object TestHelper {
     dbName= ConfigFactory.load().getString("dbconf.dbName"),
     dbUser= ConfigFactory.load().getString("dbconf.user"),
     dbPassword= ConfigFactory.load().getString("dbconf.password"),
+    certificate= ConfigFactory.load().getString("dbconf.certificate"),
     connectionParams= ConfigFactory.load().getString("dbconf.connectionParams")
   )
 

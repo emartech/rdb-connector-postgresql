@@ -14,36 +14,80 @@ class PostgreSqlConnectorItSpec extends WordSpecLike with Matchers {
     implicit val executionContext = scala.concurrent.ExecutionContext.Implicits.global
     val executor = AsyncExecutor.default()
 
-    /*"create connector" should {
+    "create connector" should {
 
-      "return error if not use ssl" in {
-        var connectionParams = TestHelper.TEST_CONNECTION_CONFIG.connectionParams
-        if (!connectionParams.isEmpty) {
-          connectionParams += "&"
-        }
-        connectionParams += "ssl=false"
+      "connect success" in {
+        val connectorEither = Await.result(PostgreSqlConnector(TestHelper.TEST_CONNECTION_CONFIG)(AsyncExecutor.default()), 5.seconds)
 
-        val badConnection = TestHelper.TEST_CONNECTION_CONFIG.copy(connectionParams = connectionParams)
-        val connection = Await.result(PostgreSqlConnector(badConnection)(executor), 3.seconds)
-        connection shouldBe Left(ErrorWithMessage("SSL Error"))
+        connectorEither shouldBe a[Right[_, _]]
+
+        connectorEither.right.get.close()
       }
 
-    }*/
+      "connect fail when ssl disabled" in {
+        val conn = TestHelper.TEST_CONNECTION_CONFIG.copy(
+          connectionParams = "ssl=false"
+        )
+        val connectorEither = Await.result(PostgreSqlConnector(conn)(AsyncExecutor.default()), 5.seconds)
+
+        connectorEither shouldBe Left(ErrorWithMessage("SSL Error"))
+      }
+
+      "connect fail when sslrootcert modified" in {
+        val conn = TestHelper.TEST_CONNECTION_CONFIG.copy(
+          connectionParams = "sslrootcert=/root.crt"
+        )
+        val connectorEither = Await.result(PostgreSqlConnector(conn)(AsyncExecutor.default()), 5.seconds)
+
+        connectorEither shouldBe Left(ErrorWithMessage("SSL Error"))
+      }
+
+      "connect fail when sslmode modified" in {
+        val conn = TestHelper.TEST_CONNECTION_CONFIG.copy(
+          connectionParams = "sslmode=disable"
+        )
+        val connectorEither = Await.result(PostgreSqlConnector(conn)(AsyncExecutor.default()), 5.seconds)
+
+        connectorEither shouldBe Left(ErrorWithMessage("SSL Error"))
+      }
+
+      "connect fail when wrong certificate" in {
+        val conn = TestHelper.TEST_CONNECTION_CONFIG.copy(certificate = "")
+        val connectorEither = Await.result(PostgreSqlConnector(conn)(AsyncExecutor.default()), 5.seconds)
+
+        connectorEither shouldBe Left(ErrorWithMessage("Cannot connect to the sql server"))
+      }
+
+      "connect fail when wrong host" in {
+        val conn = TestHelper.TEST_CONNECTION_CONFIG.copy(host = "wrong")
+        val connectorEither = Await.result(PostgreSqlConnector(conn)(AsyncExecutor.default()), 5.seconds)
+
+        connectorEither shouldBe Left(ErrorWithMessage("Cannot connect to the sql server"))
+      }
+
+      "connect fail when wrong user" in {
+        val conn = TestHelper.TEST_CONNECTION_CONFIG.copy(dbUser = "")
+        val connectorEither = Await.result(PostgreSqlConnector(conn)(AsyncExecutor.default()), 5.seconds)
+
+        connectorEither shouldBe Left(ErrorWithMessage("Cannot connect to the sql server"))
+      }
+
+      "connect fail when wrong password" in {
+        val conn = TestHelper.TEST_CONNECTION_CONFIG.copy(dbPassword = "")
+        val connectorEither = Await.result(PostgreSqlConnector(conn)(AsyncExecutor.default()), 5.seconds)
+
+        connectorEither shouldBe Left(ErrorWithMessage("Cannot connect to the sql server"))
+      }
+
+    }
 
     "#testConnection" should {
 
-      "return ok in happy case" in {
+      "success" in {
         val connection = Await.result(PostgreSqlConnector(TestHelper.TEST_CONNECTION_CONFIG)(executor), 3.seconds).toOption.get
         val result = Await.result(connection.testConnection(), 3.seconds)
         result shouldBe Right()
         connection.close()
-      }
-
-      "return error if cant connect" in {
-        val badConnection = TestHelper.TEST_CONNECTION_CONFIG.copy(host = "asd.asd.asd")
-        val connection = Await.result(PostgreSqlConnector(badConnection)(executor), 3.seconds).toOption.get
-        val result = Await.result(connection.testConnection(), 3.seconds)
-        result shouldBe Left(ErrorWithMessage("Cannot connect to the sql server"))
       }
 
     }

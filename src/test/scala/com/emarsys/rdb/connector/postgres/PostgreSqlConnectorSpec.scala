@@ -16,6 +16,7 @@ class PostgreSqlConnectorSpec extends WordSpecLike with Matchers{
         dbName = "database",
         dbUser = "me",
         dbPassword = "secret",
+        certificate = "cert",
         connectionParams = "?param1=asd"
       )
 
@@ -36,13 +37,13 @@ class PostgreSqlConnectorSpec extends WordSpecLike with Matchers{
 
     }
 
-    /*"#checkSsl" should {
+    "#checkSsl" should {
 
       "return true if empty connection params" in {
         PostgreSqlConnector.checkSsl("") shouldBe true
       }
 
-      "return true if not contains ssl=false" in {
+      "return true if not contains ssl=false or sslrootcert or sslmode" in {
         PostgreSqlConnector.checkSsl("?param1=param&param2=param2") shouldBe true
       }
 
@@ -50,7 +51,15 @@ class PostgreSqlConnectorSpec extends WordSpecLike with Matchers{
         PostgreSqlConnector.checkSsl("?param1=param&ssl=false&param2=param2") shouldBe false
       }
 
-    }*/
+      "return false if contains sslrootcert" in {
+        PostgreSqlConnector.checkSsl("?param1=param&sslrootcert=false&param2=param2") shouldBe false
+      }
+
+      "return false if contains sslmode" in {
+        PostgreSqlConnector.checkSsl("?param1=param&sslmode=false&param2=param2") shouldBe false
+      }
+
+    }
 
     "#meta" should {
 
