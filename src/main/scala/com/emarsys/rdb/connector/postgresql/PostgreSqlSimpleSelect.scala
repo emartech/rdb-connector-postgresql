@@ -1,4 +1,4 @@
-package com.emarsys.rdb.connector.postgres
+package com.emarsys.rdb.connector.postgresql
 
 import akka.NotUsed
 import akka.stream.scaladsl.Source

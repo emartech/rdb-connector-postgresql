@@ -1,8 +1,8 @@
-package com.emarsys.rdb.connector.postgres.utils
+package com.emarsys.rdb.connector.postgresql.utils
 
 import java.util.Properties
 
-import com.emarsys.rdb.connector.postgres.PostgreSqlConnector.{PostgreSqlConnectionConfig, createUrl}
+import com.emarsys.rdb.connector.postgresql.PostgreSqlConnector.{PostgreSqlConnectionConfig, createUrl}
 import slick.util.AsyncExecutor
 
 import scala.concurrent.Future

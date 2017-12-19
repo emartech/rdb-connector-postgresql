@@ -1,4 +1,4 @@
-package com.emarsys.rdb.connector.postgres
+package com.emarsys.rdb.connector.postgresql
 
 import com.emarsys.rdb.connector.common.ConnectorResponse
 import com.emarsys.rdb.connector.common.models.Errors.ErrorWithMessage

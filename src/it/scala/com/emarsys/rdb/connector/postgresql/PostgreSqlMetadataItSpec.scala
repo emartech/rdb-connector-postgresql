@@ -1,7 +1,7 @@
-package com.emarsys.rdb.connector.postgres
+package com.emarsys.rdb.connector.postgresql
 
 import com.emarsys.rdb.connector.common.models.Connector
-import com.emarsys.rdb.connector.postgres.utils.TestHelper
+import com.emarsys.rdb.connector.postgresql.utils.TestHelper
 import com.emarsys.rdb.connector.test.MetadataItSpec
 import slick.util.AsyncExecutor
 

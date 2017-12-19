@@ -1,7 +1,7 @@
-package com.emarsys.rdb.connector.postgres
+package com.emarsys.rdb.connector.postgresql
 
 import com.emarsys.rdb.connector.common.models.MetaData
-import com.emarsys.rdb.connector.postgres.PostgreSqlConnector.PostgreSqlConnectionConfig
+import com.emarsys.rdb.connector.postgresql.PostgreSqlConnector.PostgreSqlConnectionConfig
 import org.scalatest.{Matchers, WordSpecLike}
 
 class PostgreSqlConnectorSpec extends WordSpecLike with Matchers{

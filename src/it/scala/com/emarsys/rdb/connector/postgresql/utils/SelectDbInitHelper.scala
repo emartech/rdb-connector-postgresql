@@ -1,7 +1,7 @@
-package com.emarsys.rdb.connector.postgres.utils
+package com.emarsys.rdb.connector.postgresql.utils
 
 import com.emarsys.rdb.connector.common.models.Connector
-import com.emarsys.rdb.connector.postgres.PostgreSqlConnector
+import com.emarsys.rdb.connector.postgresql.PostgreSqlConnector
 import slick.util.AsyncExecutor
 
 import concurrent.duration._

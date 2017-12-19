@@ -1,10 +1,10 @@
-package com.emarsys.rdb.connector.postgres
+package com.emarsys.rdb.connector.postgresql
 
 import java.util.UUID
 
 import com.emarsys.rdb.connector.common.models.Connector
 import com.emarsys.rdb.connector.common.models.Errors.TableNotFound
-import com.emarsys.rdb.connector.postgres.utils.TestHelper
+import com.emarsys.rdb.connector.postgresql.utils.TestHelper
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 import slick.util.AsyncExecutor
 

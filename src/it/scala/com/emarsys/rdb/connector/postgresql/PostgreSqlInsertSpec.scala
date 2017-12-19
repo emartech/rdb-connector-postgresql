@@ -1,14 +1,14 @@
-package com.emarsys.rdb.connector.postgres
+package com.emarsys.rdb.connector.postgresql
 
 import akka.actor.ActorSystem
 import akka.stream.{ActorMaterializer, Materializer}
 import akka.testkit.TestKit
-import com.emarsys.rdb.connector.postgres.utils.SelectDbInitHelper
-import com.emarsys.rdb.connector.test.ReplaceItSpec
-
+import com.emarsys.rdb.connector.postgresql.utils.SelectDbInitHelper
+import com.emarsys.rdb.connector.test.InsertItSpec
 import concurrent.duration._
 
-class PostgreSqlReplaceItSpec extends TestKit(ActorSystem()) with ReplaceItSpec with SelectDbInitHelper {
+class PostgreSqlInsertSpec extends TestKit(ActorSystem()) with InsertItSpec with SelectDbInitHelper {
+
   val aTableName: String = tableName
   val bTableName: String = s"temp_$uuid"
 
@@ -20,6 +20,4 @@ class PostgreSqlReplaceItSpec extends TestKit(ActorSystem()) with ReplaceItSpec 
     system.terminate()
     super.afterAll()
   }
-
 }
-

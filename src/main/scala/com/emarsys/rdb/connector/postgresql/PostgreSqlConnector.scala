@@ -1,4 +1,4 @@
-package com.emarsys.rdb.connector.postgres
+package com.emarsys.rdb.connector.postgresql
 
 import java.io.{File, PrintWriter}
 import java.util.Properties
@@ -6,7 +6,7 @@ import java.util.Properties
 import com.emarsys.rdb.connector.common.ConnectorResponse
 import com.emarsys.rdb.connector.common.models.Errors.{ConnectorError, ErrorWithMessage}
 import com.emarsys.rdb.connector.common.models.{ConnectionConfig, Connector, ConnectorCompanion, MetaData}
-import com.emarsys.rdb.connector.postgres.PostgreSqlConnector.PostgreSqlConnectorConfig
+import com.emarsys.rdb.connector.postgresql.PostgreSqlConnector.PostgreSqlConnectorConfig
 import slick.jdbc.PostgresProfile.api._
 import slick.util.AsyncExecutor
 
@@ -102,7 +102,7 @@ object PostgreSqlConnector extends ConnectorCompanion {
     temp.getAbsolutePath
   }
 
-  private[postgres] def checkSsl(connectionParams: String): Boolean = {
+  private[postgresql] def checkSsl(connectionParams: String): Boolean = {
     !connectionParams.matches(".*ssl=false.*") &&
       !connectionParams.matches(".*sslmode=.*") &&
       !connectionParams.matches(".*sslrootcert=.*")
@@ -112,7 +112,7 @@ object PostgreSqlConnector extends ConnectorCompanion {
     db.run(sql"SELECT 1".as[(String)]).map(_ => {})
   }
 
-  private[postgres] def createUrl(config: PostgreSqlConnectionConfig) = {
+  private[postgresql] def createUrl(config: PostgreSqlConnectionConfig) = {
     s"jdbc:postgresql://${config.host}:${config.port}/${config.dbName}${safeConnectionParams(config.connectionParams)}"
   }
 
