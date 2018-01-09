@@ -11,17 +11,16 @@ import slick.jdbc.PostgresProfile.api._
 
 object TestHelper {
   import com.typesafe.config.ConfigFactory
-
-  val value = ConfigFactory.load().getString("dbconf.host")
+  lazy val config = ConfigFactory.load()
 
   lazy val TEST_CONNECTION_CONFIG = PostgreSqlConnectionConfig(
-    host = ConfigFactory.load().getString("dbconf.host"),
-    port= ConfigFactory.load().getInt("dbconf.port"),
-    dbName= ConfigFactory.load().getString("dbconf.dbName"),
-    dbUser= ConfigFactory.load().getString("dbconf.user"),
-    dbPassword= ConfigFactory.load().getString("dbconf.password"),
-    certificate= ConfigFactory.load().getString("dbconf.certificate"),
-    connectionParams= ConfigFactory.load().getString("dbconf.connectionParams")
+    host = config.getString("dbconf.host"),
+    port= config.getInt("dbconf.port"),
+    dbName= config.getString("dbconf.dbName"),
+    dbUser= config.getString("dbconf.user"),
+    dbPassword= config.getString("dbconf.password"),
+    certificate= config.getString("dbconf.certificate"),
+    connectionParams= config.getString("dbconf.connectionParams")
   )
 
   private lazy val executor = AsyncExecutor.default()
