@@ -24,6 +24,17 @@ class PostgreSqlConnectorItSpec extends WordSpecLike with Matchers {
         connectorEither.right.get.close()
       }
 
+      "connect ok when hikari enabled" in {
+
+        object PostgresWithHikari extends PostgreSqlConnectorTrait {
+          override val useHikari: Boolean = true
+        }
+
+        val connectorEither = Await.result(PostgresWithHikari(TestHelper.TEST_CONNECTION_CONFIG)(AsyncExecutor.default()), 5.seconds)
+
+        connectorEither shouldBe a [Right[_, _]]
+      }
+
       "connect fail when ssl disabled" in {
         val conn = TestHelper.TEST_CONNECTION_CONFIG.copy(
           connectionParams = "ssl=false"

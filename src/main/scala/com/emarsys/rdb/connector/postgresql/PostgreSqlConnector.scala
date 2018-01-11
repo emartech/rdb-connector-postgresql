@@ -6,7 +6,8 @@ import java.util.Properties
 import com.emarsys.rdb.connector.common.ConnectorResponse
 import com.emarsys.rdb.connector.common.models.Errors.{ConnectorError, ErrorWithMessage}
 import com.emarsys.rdb.connector.common.models.{ConnectionConfig, Connector, ConnectorCompanion, MetaData}
-import com.emarsys.rdb.connector.postgresql.PostgreSqlConnector.PostgreSqlConnectorConfig
+import com.emarsys.rdb.connector.postgresql.PostgreSqlConnector.{PostgreSqlConnectionConfig, PostgreSqlConnectorConfig}
+import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
 import slick.jdbc.PostgresProfile.api._
 import slick.util.AsyncExecutor
 
@@ -32,7 +33,7 @@ class PostgreSqlConnector(
   }
 }
 
-object PostgreSqlConnector extends ConnectorCompanion {
+object PostgreSqlConnector extends PostgreSqlConnectorTrait {
 
   case class PostgreSqlConnectionConfig(
                                          host: String,
@@ -49,10 +50,16 @@ object PostgreSqlConnector extends ConnectorCompanion {
                                         streamChunkSize: Int
                                       )
 
+}
+
+trait PostgreSqlConnectorTrait extends ConnectorCompanion {
+
   private val defaultConfig = PostgreSqlConnectorConfig(
     queryTimeout = 20.minutes,
     streamChunkSize = 5000
   )
+
+  val useHikari: Boolean = Config.db.useHikari
 
   def apply(
              config: PostgreSqlConnectionConfig,
@@ -67,20 +74,33 @@ object PostgreSqlConnector extends ConnectorCompanion {
       Future.successful(Left(ErrorWithMessage("SSL Error")))
     } else {
 
-      val prop = new Properties()
-      prop.setProperty("ssl", "true")
-      prop.setProperty("sslmode", "verify-ca")
-      prop.setProperty("loggerLevel", "OFF")
-      prop.setProperty("sslrootcert", createTempFile(config.certificate))
+      val db = if(!useHikari) {
+        val prop = new Properties()
+        prop.setProperty("ssl", "true")
+        prop.setProperty("sslmode", "verify-ca")
+        prop.setProperty("loggerLevel", "OFF")
+        prop.setProperty("sslrootcert", createTempFile(config.certificate))
 
-      val db = Database.forURL(
-        url = createUrl(config),
-        driver = "org.postgresql.Driver",
-        user = config.dbUser,
-        password = config.dbPassword,
-        prop = prop,
-        executor = executor
-      )
+        Database.forURL(
+          url = createUrl(config),
+          driver = "org.postgresql.Driver",
+          user = config.dbUser,
+          password = config.dbPassword,
+          prop = prop,
+          executor = executor
+        )
+      } else {
+        val customDbConf = ConfigFactory.load()
+          .withValue("postgredb.properties.url", ConfigValueFactory.fromAnyRef(createUrl(config)))
+          .withValue("postgredb.properties.user", ConfigValueFactory.fromAnyRef(config.dbUser))
+          .withValue("postgredb.properties.password", ConfigValueFactory.fromAnyRef(config.dbPassword))
+          .withValue("postgredb.properties.driver", ConfigValueFactory.fromAnyRef("org.postgresql.Driver"))
+          .withValue("postgredb.properties.properties.ssl", ConfigValueFactory.fromAnyRef("true"))
+          .withValue("postgredb.properties.properties.sslmode", ConfigValueFactory.fromAnyRef("verify-ca"))
+          .withValue("postgredb.properties.properties.loggerLevel", ConfigValueFactory.fromAnyRef("OFF"))
+          .withValue("postgredb.properties.properties.sslrootcert", ConfigValueFactory.fromAnyRef(createTempFile(config.certificate)))
+        Database.forConfig("postgredb", customDbConf)
+      }
 
       checkConnection(db).map[Either[ConnectorError, PostgreSqlConnector]] {
         _ => Right(new PostgreSqlConnector(db, connectorConfig))
