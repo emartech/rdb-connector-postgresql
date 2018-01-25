@@ -48,9 +48,9 @@ trait SelectDbInitHelper {
     val insertBDataSql =
       s"""INSERT INTO "$bTableName" (b1,b2,b3,b4) VALUES
          |('b,1', 'b.1', 'b:1', 'b"1'),
-         |('b\\;2', 'b\\\\2', 'b2', 'b=2'),
+         |('b;2', 'b\\2', 'b''2', 'b=2'),
          |('b!3', 'b@3', 'b#3', NULL),
-         |('b $$4', 'b%4', 'b 4', NULL)
+         |('b$$4', 'b%4', 'b 4', NULL)
          |;""".stripMargin
 
     val addIndex1 =
