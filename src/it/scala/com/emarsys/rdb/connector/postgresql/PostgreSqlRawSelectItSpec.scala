@@ -39,7 +39,7 @@ class PostgreSqlRawSelectItSpec extends TestKit(ActorSystem()) with RawSelectItS
 
       result shouldEqual Seq(
         Seq ("QUERY PLAN"),
-        Seq(s"""Seq Scan on "$aTableName"  (cost=0.00..1.07 rows=7 width=521)""")
+        Seq(s"""Seq Scan on $aTableName  (cost=0.00..1.07 rows=7 width=521)""")
       )
     }
   }
