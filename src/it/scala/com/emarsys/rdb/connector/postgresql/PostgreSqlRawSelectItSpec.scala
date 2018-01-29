@@ -3,13 +3,13 @@ package com.emarsys.rdb.connector.postgresql
 import akka.actor.ActorSystem
 import akka.stream.{ActorMaterializer, Materializer}
 import akka.testkit.TestKit
+import com.emarsys.rdb.connector.common.models.Errors.ErrorWithMessage
 import com.emarsys.rdb.connector.postgresql.utils.SelectDbInitHelper
 import com.emarsys.rdb.connector.test.RawSelectItSpec
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 
 import concurrent.duration._
-
-import scala.concurrent.ExecutionContextExecutor
+import scala.concurrent.{Await, ExecutionContextExecutor}
 
 class PostgreSqlRawSelectItSpec extends TestKit(ActorSystem()) with RawSelectItSpec with SelectDbInitHelper with WordSpecLike  with Matchers with BeforeAndAfterAll {
 
@@ -32,6 +32,21 @@ class PostgreSqlRawSelectItSpec extends TestKit(ActorSystem()) with RawSelectItS
   override val simpleSelect = s"""SELECT * FROM "$aTableName";"""
   override val badSimpleSelect = s"""SELECT * ForM "$aTableName""""
   override val simpleSelectNoSemicolon = s"""SELECT * FROM "$aTableName""""
+
+  "#validateProjectedRawSelect" should {
+    "return ok if ok" in {
+      Await.result(connector.validateProjectedRawSelect(simpleSelect, Seq("A1")), awaitTimeout) shouldBe Right()
+    }
+
+    "return ok if no ; in query" in {
+      Await.result(connector.validateProjectedRawSelect(simpleSelectNoSemicolon, Seq("A1")), awaitTimeout) shouldBe Right()
+    }
+
+    "return error if not ok" in {
+      Await.result(connector.validateProjectedRawSelect(simpleSelect, Seq("NONEXISTENT_COLUMN")), awaitTimeout) shouldBe a[Left[ErrorWithMessage, Unit]]
+    }
+  }
+
 
   "#analyzeRawSelect" should {
     "return result" in {
