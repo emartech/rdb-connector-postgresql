@@ -5,7 +5,7 @@ import java.util.Properties
 
 import com.emarsys.rdb.connector.common.ConnectorResponse
 import com.emarsys.rdb.connector.common.models.Errors.{ConnectorError, ErrorWithMessage}
-import com.emarsys.rdb.connector.common.models.{ConnectionConfig, Connector, ConnectorCompanion, MetaData}
+import com.emarsys.rdb.connector.common.models._
 import com.emarsys.rdb.connector.postgresql.PostgreSqlConnector.{PostgreSqlConnectionConfig, PostgreSqlConnectorConfig}
 import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
 import slick.jdbc.PostgresProfile.api._
@@ -43,7 +43,11 @@ object PostgreSqlConnector extends PostgreSqlConnectorTrait {
                                          dbPassword: String,
                                          certificate: String,
                                          connectionParams: String
-                                       ) extends ConnectionConfig
+                                       ) extends ConnectionConfig {
+    override def toCommonFormat: CommonConnectionReadableData = {
+      CommonConnectionReadableData("redshift", s"$host:$port", dbName, dbUser)
+    }
+  }
 
   case class PostgreSqlConnectorConfig(
                                         queryTimeout: FiniteDuration,
