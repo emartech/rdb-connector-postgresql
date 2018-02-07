@@ -45,7 +45,7 @@ object PostgreSqlConnector extends PostgreSqlConnectorTrait {
                                          connectionParams: String
                                        ) extends ConnectionConfig {
     override def toCommonFormat: CommonConnectionReadableData = {
-      CommonConnectionReadableData("redshift", s"$host:$port", dbName, dbUser)
+      CommonConnectionReadableData("postgres", s"$host:$port", dbName, dbUser)
     }
   }
 
