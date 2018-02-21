@@ -24,7 +24,7 @@ libraryDependencies ++= {
     "com.typesafe.slick"  %% "slick-hikaricp"       % slickV,
     "org.scalatest"       %% "scalatest"            % scalaTestV   % "test",
     "com.typesafe.akka"   %% "akka-stream-testkit"  % "2.5.6"      % "test",
-    "com.github.emartech" %  "rdb-connector-test"   % "e124eee311" % "test",
+    "com.github.emartech" %  "rdb-connector-test"   % "f66163b23e" % "test",
     "org.postgresql"      %  "postgresql"           % "42.1.4"
   )
 }

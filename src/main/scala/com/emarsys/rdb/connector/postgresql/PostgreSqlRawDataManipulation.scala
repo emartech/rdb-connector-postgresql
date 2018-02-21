@@ -60,9 +60,9 @@ trait PostgreSqlRawDataManipulation {
 
           val primaryKeyDefinitions = filterPrivateKeyDefinitions(primaryKeyFields, definitions)
           val query = (for {
-            deleteCount <- createDeleteQuery(tableName, primaryKeyDefinitions)
+            _           <- createDeleteQuery(tableName, primaryKeyDefinitions)
             insertCount <- createInsertQuery(tableName, definitions)
-          } yield deleteCount + insertCount).transactionally
+          } yield insertCount).transactionally
 
           db.run(query).map(Right(_))
         }
