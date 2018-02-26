@@ -1,26 +1,33 @@
 package com.emarsys.rdb.connector.postgresql
 
 import java.io.{File, PrintWriter}
-import java.util.Properties
+import java.util.{Properties, UUID}
 
 import com.emarsys.rdb.connector.common.ConnectorResponse
-import com.emarsys.rdb.connector.common.models.Errors.{ConnectorError, ErrorWithMessage}
+import com.emarsys.rdb.connector.common.models.Errors.{
+  ConnectorError,
+  ErrorWithMessage
+}
 import com.emarsys.rdb.connector.common.models._
-import com.emarsys.rdb.connector.postgresql.PostgreSqlConnector.{PostgreSqlConnectionConfig, PostgreSqlConnectorConfig}
+import com.emarsys.rdb.connector.postgresql.PostgreSqlConnector.{
+  PostgreSqlConnectionConfig,
+  PostgreSqlConnectorConfig
+}
 import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
 import slick.jdbc.PostgresProfile.api._
 import slick.util.AsyncExecutor
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Try
 
 class PostgreSqlConnector(
-                           protected val db: Database,
-                           protected val connectorConfig: PostgreSqlConnectorConfig
-                         )(
-                           implicit val executionContext: ExecutionContext
-                         )
-  extends Connector
+    protected val db: Database,
+    protected val connectorConfig: PostgreSqlConnectorConfig,
+    protected val poolName: String
+)(
+    implicit val executionContext: ExecutionContext
+) extends Connector
     with PostgreSqlTestConnection
     with PostgreSqlMetadata
     with PostgreSqlSimpleSelect
@@ -31,34 +38,52 @@ class PostgreSqlConnector(
   override def close(): Future[Unit] = {
     db.shutdown
   }
+
+  override def innerMetrics(): String = {
+    import java.lang.management.ManagementFactory
+    import com.zaxxer.hikari.HikariPoolMXBean
+    import javax.management.{JMX, ObjectName}
+    Try {
+      val mBeanServer = ManagementFactory.getPlatformMBeanServer
+      val poolObjectName = new ObjectName(s"com.zaxxer.hikari:type=Pool ($poolName)")
+      val poolProxy = JMX.newMXBeanProxy(mBeanServer, poolObjectName, classOf[HikariPoolMXBean])
+
+      s"""{
+         |"activeConnections": ${poolProxy.getActiveConnections},
+         |"idleConnections": ${poolProxy.getIdleConnections},
+         |"threadAwaitingConnections": ${poolProxy.getThreadsAwaitingConnection},
+         |"totalConnections": ${poolProxy.getTotalConnections}
+         |}""".stripMargin
+    }.getOrElse(super.innerMetrics)
+  }
 }
 
 object PostgreSqlConnector extends PostgreSqlConnectorTrait {
 
   case class PostgreSqlConnectionConfig(
-                                         host: String,
-                                         port: Int,
-                                         dbName: String,
-                                         dbUser: String,
-                                         dbPassword: String,
-                                         certificate: String,
-                                         connectionParams: String
-                                       ) extends ConnectionConfig {
+      host: String,
+      port: Int,
+      dbName: String,
+      dbUser: String,
+      dbPassword: String,
+      certificate: String,
+      connectionParams: String
+  ) extends ConnectionConfig {
     override def toCommonFormat: CommonConnectionReadableData = {
       CommonConnectionReadableData("postgres", s"$host:$port", dbName, dbUser)
     }
   }
 
   case class PostgreSqlConnectorConfig(
-                                        queryTimeout: FiniteDuration,
-                                        streamChunkSize: Int
-                                      )
+      queryTimeout: FiniteDuration,
+      streamChunkSize: Int
+  )
 
 }
 
 trait PostgreSqlConnectorTrait extends ConnectorCompanion {
 
-  private val defaultConfig = PostgreSqlConnectorConfig(
+  private[postgresql] val defaultConfig = PostgreSqlConnectorConfig(
     queryTimeout = 20.minutes,
     streamChunkSize = 5000
   )
@@ -66,19 +91,21 @@ trait PostgreSqlConnectorTrait extends ConnectorCompanion {
   val useHikari: Boolean = Config.db.useHikari
 
   def apply(
-             config: PostgreSqlConnectionConfig,
-             connectorConfig: PostgreSqlConnectorConfig = defaultConfig
-           )(
-             executor: AsyncExecutor
-           )(
-             implicit executionContext: ExecutionContext
-           ): ConnectorResponse[PostgreSqlConnector] = {
+      config: PostgreSqlConnectionConfig,
+      connectorConfig: PostgreSqlConnectorConfig = defaultConfig
+  )(
+      executor: AsyncExecutor
+  )(
+      implicit executionContext: ExecutionContext
+  ): ConnectorResponse[PostgreSqlConnector] = {
+
+    val poolName = UUID.randomUUID.toString
 
     if (!checkSsl(config.connectionParams)) {
       Future.successful(Left(ErrorWithMessage("SSL Error")))
     } else {
 
-      val db = if(!useHikari) {
+      val db = if (!useHikari) {
         val prop = new Properties()
         prop.setProperty("ssl", "true")
         prop.setProperty("sslmode", "verify-ca")
@@ -94,23 +121,39 @@ trait PostgreSqlConnectorTrait extends ConnectorCompanion {
           executor = executor
         )
       } else {
-        val customDbConf = ConfigFactory.load()
-          .withValue("postgredb.properties.url", ConfigValueFactory.fromAnyRef(createUrl(config)))
-          .withValue("postgredb.properties.user", ConfigValueFactory.fromAnyRef(config.dbUser))
-          .withValue("postgredb.properties.password", ConfigValueFactory.fromAnyRef(config.dbPassword))
-          .withValue("postgredb.properties.driver", ConfigValueFactory.fromAnyRef("org.postgresql.Driver"))
-          .withValue("postgredb.properties.properties.ssl", ConfigValueFactory.fromAnyRef("true"))
-          .withValue("postgredb.properties.properties.sslmode", ConfigValueFactory.fromAnyRef("verify-ca"))
-          .withValue("postgredb.properties.properties.loggerLevel", ConfigValueFactory.fromAnyRef("OFF"))
-          .withValue("postgredb.properties.properties.sslrootcert", ConfigValueFactory.fromAnyRef(createTempFile(config.certificate)))
+        val customDbConf = ConfigFactory
+          .load()
+          .withValue("postgredb.poolName",
+                     ConfigValueFactory.fromAnyRef(poolName))
+          .withValue("postgredb.registerMbeans",
+                     ConfigValueFactory.fromAnyRef(true))
+          .withValue("postgredb.properties.url",
+                     ConfigValueFactory.fromAnyRef(createUrl(config)))
+          .withValue("postgredb.properties.user",
+                     ConfigValueFactory.fromAnyRef(config.dbUser))
+          .withValue("postgredb.properties.password",
+                     ConfigValueFactory.fromAnyRef(config.dbPassword))
+          .withValue("postgredb.properties.driver",
+                     ConfigValueFactory.fromAnyRef("org.postgresql.Driver"))
+          .withValue("postgredb.properties.properties.ssl",
+                     ConfigValueFactory.fromAnyRef("true"))
+          .withValue("postgredb.properties.properties.sslmode",
+                     ConfigValueFactory.fromAnyRef("verify-ca"))
+          .withValue("postgredb.properties.properties.loggerLevel",
+                     ConfigValueFactory.fromAnyRef("OFF"))
+          .withValue(
+            "postgredb.properties.properties.sslrootcert",
+            ConfigValueFactory.fromAnyRef(createTempFile(config.certificate)))
         Database.forConfig("postgredb", customDbConf)
       }
 
-      checkConnection(db).map[Either[ConnectorError, PostgreSqlConnector]] {
-        _ => Right(new PostgreSqlConnector(db, connectorConfig))
-      }.recover {
-        case _ => Left(ErrorWithMessage("Cannot connect to the sql server"))
-      }
+      checkConnection(db)
+        .map[Either[ConnectorError, PostgreSqlConnector]] { _ =>
+          Right(new PostgreSqlConnector(db, connectorConfig, poolName))
+        }
+        .recover {
+          case _ => Left(ErrorWithMessage("Cannot connect to the sql server"))
+        }
     }
   }
 
@@ -128,11 +171,12 @@ trait PostgreSqlConnectorTrait extends ConnectorCompanion {
 
   private[postgresql] def checkSsl(connectionParams: String): Boolean = {
     !connectionParams.matches(".*ssl=false.*") &&
-      !connectionParams.matches(".*sslmode=.*") &&
-      !connectionParams.matches(".*sslrootcert=.*")
+    !connectionParams.matches(".*sslmode=.*") &&
+    !connectionParams.matches(".*sslrootcert=.*")
   }
 
-  private def checkConnection(db: Database)(implicit executionContext: ExecutionContext): Future[Unit] = {
+  private def checkConnection(db: Database)(
+      implicit executionContext: ExecutionContext): Future[Unit] = {
     db.run(sql"SELECT 1".as[(String)]).map(_ => {})
   }
 
