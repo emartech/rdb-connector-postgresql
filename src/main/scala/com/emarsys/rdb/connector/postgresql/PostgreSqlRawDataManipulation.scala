@@ -48,29 +48,6 @@ trait PostgreSqlRawDataManipulation {
     }
   }
 
-  override def rawUpsert(tableName: String, definitions: Seq[Record]): ConnectorResponse[Int] = {
-    if (definitions.isEmpty) {
-      Future.successful(Right(0))
-    } else {
-      getPrimaryKeyFields(tableName).flatMap((primaryKeyFields: Seq[String]) => {
-        if (primaryKeyFields.isEmpty) {
-          rawInsertData(tableName, definitions)
-        } else {
-
-          val primaryKeyDefinitions = filterPrivateKeyDefinitions(primaryKeyFields, definitions)
-          val query = (for {
-            _           <- createDeleteQuery(tableName, primaryKeyDefinitions)
-            insertCount <- createInsertQuery(tableName, definitions)
-          } yield insertCount).transactionally
-
-          db.run(query).map(Right(_))
-        }
-      }).recover {
-        case ex => Left(ErrorWithMessage(ex.toString))
-      }
-    }
-  }
-
   override def rawDelete(tableName: String, criteria: Seq[Criteria]): ConnectorResponse[Int] = {
     if (criteria.isEmpty) {
       Future.successful(Right(0))
