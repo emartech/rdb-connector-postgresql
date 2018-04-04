@@ -11,7 +11,7 @@ trait PostgreSqlMetadata {
   self: PostgreSqlConnector =>
 
   override def listTables(): ConnectorResponse[Seq[TableModel]] = {
-    db.run(sql"SELECT table_name, table_type FROM information_schema.tables WHERE table_schema = 'public';".as[(String, String)])
+    db.run(sql"SELECT table_name, table_type FROM information_schema.tables WHERE table_schema = $schemaName;".as[(String, String)])
       .map(_.map(parseToTableModel))
       .map(Right(_))
       .recover {
@@ -20,7 +20,7 @@ trait PostgreSqlMetadata {
   }
 
   override def listFields(tableName: String): ConnectorResponse[Seq[FieldModel]] = {
-    db.run(sql"SELECT column_name, data_type FROM information_schema.columns WHERE table_schema = 'public' AND table_name = $tableName;".as[(String, String)])
+    db.run(sql"SELECT column_name, data_type FROM information_schema.columns WHERE table_schema = $schemaName AND table_name = $tableName;".as[(String, String)])
       .map(_.map(parseToFiledModel))
       .map(fields => {
         if(fields.isEmpty) {
@@ -43,7 +43,7 @@ trait PostgreSqlMetadata {
   }
 
   private def listAllFields(): Future[Map[String, Seq[FieldModel]]] = {
-    db.run(sql"SELECT table_name, column_name, data_type FROM information_schema.columns WHERE table_schema = 'public';".as[(String, String, String)])
+    db.run(sql"SELECT table_name, column_name, data_type FROM information_schema.columns WHERE table_schema = $schemaName;".as[(String, String, String)])
       .map(_.groupBy(_._1).mapValues(_.map(x => parseToFiledModel(x._2 -> x._3)).toSeq))
   }
 

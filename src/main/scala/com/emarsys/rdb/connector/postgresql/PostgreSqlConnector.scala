@@ -24,7 +24,8 @@ import scala.util.Try
 class PostgreSqlConnector(
     protected val db: Database,
     protected val connectorConfig: PostgreSqlConnectorConfig,
-    protected val poolName: String
+    protected val poolName: String,
+    protected val schemaName: String
 )(
     implicit val executionContext: ExecutionContext
 ) extends Connector
@@ -149,7 +150,7 @@ trait PostgreSqlConnectorTrait extends ConnectorCompanion {
 
       checkConnection(db)
         .map[Either[ConnectorError, PostgreSqlConnector]] { _ =>
-          Right(new PostgreSqlConnector(db, connectorConfig, poolName))
+          Right(new PostgreSqlConnector(db, connectorConfig, poolName, createSchemaName(config)))
         }
         .recover {
           case _ => Left(ErrorWithMessage("Cannot connect to the sql server"))
@@ -182,6 +183,14 @@ trait PostgreSqlConnectorTrait extends ConnectorCompanion {
 
   private[postgresql] def createUrl(config: PostgreSqlConnectionConfig) = {
     s"jdbc:postgresql://${config.host}:${config.port}/${config.dbName}${safeConnectionParams(config.connectionParams)}"
+  }
+
+  private def createSchemaName(config: PostgreSqlConnectionConfig) = {
+    config.connectionParams
+      .split("&").toList
+      .find(_.startsWith("currentSchema="))
+      .flatMap(_.split("=").toList.tail.headOption)
+      .getOrElse("public")
   }
 
   private def safeConnectionParams(connectionParams: String) = {
