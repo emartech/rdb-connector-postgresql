@@ -2,7 +2,6 @@ package com.emarsys.rdb.connector.postgresql
 
 import com.emarsys.rdb.connector.common.ConnectorResponse
 import com.emarsys.rdb.connector.common.models.DataManipulation.{Criteria, FieldValueWrapper, Record, UpdateDefinition}
-import com.emarsys.rdb.connector.common.models.Errors.ErrorWithMessage
 import com.emarsys.rdb.connector.common.models.SimpleSelect._
 import slick.jdbc.PostgresProfile.api._
 import com.emarsys.rdb.connector.common.defaults.SqlWriter._
@@ -28,9 +27,7 @@ trait PostgreSqlRawDataManipulation {
 
       db.run(DBIO.sequence(queries).transactionally)
         .map(results => Right(results.sum))
-        .recover {
-          case ex => Left(ErrorWithMessage(ex.toString))
-        }
+        .recover(errorHandler())
     }
   }
 
@@ -42,9 +39,7 @@ trait PostgreSqlRawDataManipulation {
 
       db.run(query)
         .map(result => Right(result))
-        .recover {
-          case ex => Left(ErrorWithMessage(ex.toString))
-        }
+        .recover(errorHandler())
     }
   }
 
@@ -56,9 +51,7 @@ trait PostgreSqlRawDataManipulation {
 
       db.run(query)
         .map(result => Right(result))
-        .recover {
-          case ex => Left(ErrorWithMessage(ex.toString))
-        }
+        .recover(errorHandler())
     }
   }
 
@@ -77,9 +70,7 @@ trait PostgreSqlRawDataManipulation {
           )
         )
       )
-      .recover {
-        case ex => Left(ErrorWithMessage(ex.toString))
-      }
+      .recover(errorHandler())
   }
 
   private def swapTableNames(tableName: String, newTableName: String): Future[Seq[Int]] = {

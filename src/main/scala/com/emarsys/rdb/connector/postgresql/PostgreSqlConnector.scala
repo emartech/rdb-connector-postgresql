@@ -4,15 +4,9 @@ import java.io.{File, PrintWriter}
 import java.util.{Properties, UUID}
 
 import com.emarsys.rdb.connector.common.ConnectorResponse
-import com.emarsys.rdb.connector.common.models.Errors.{
-  ConnectorError,
-  ErrorWithMessage
-}
+import com.emarsys.rdb.connector.common.models.Errors.{ConnectionConfigError, ConnectionError, ConnectorError, ErrorWithMessage}
 import com.emarsys.rdb.connector.common.models._
-import com.emarsys.rdb.connector.postgresql.PostgreSqlConnector.{
-  PostgreSqlConnectionConfig,
-  PostgreSqlConnectorConfig
-}
+import com.emarsys.rdb.connector.postgresql.PostgreSqlConnector.{PostgreSqlConnectionConfig, PostgreSqlConnectorConfig}
 import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
 import slick.jdbc.PostgresProfile.api._
 import slick.util.AsyncExecutor
@@ -29,6 +23,7 @@ class PostgreSqlConnector(
 )(
     implicit val executionContext: ExecutionContext
 ) extends Connector
+    with PostgreSqlErrorHandling
     with PostgreSqlTestConnection
     with PostgreSqlMetadata
     with PostgreSqlSimpleSelect
@@ -103,7 +98,7 @@ trait PostgreSqlConnectorTrait extends ConnectorCompanion {
     val poolName = UUID.randomUUID.toString
 
     if (!checkSsl(config.connectionParams)) {
-      Future.successful(Left(ErrorWithMessage("SSL Error")))
+      Future.successful(Left(ConnectionConfigError("SSL Error")))
     } else {
 
       val db = if (!useHikari) {
@@ -153,7 +148,7 @@ trait PostgreSqlConnectorTrait extends ConnectorCompanion {
           Right(new PostgreSqlConnector(db, connectorConfig, poolName, createSchemaName(config)))
         }
         .recover {
-          case _ => Left(ErrorWithMessage("Cannot connect to the sql server"))
+          case ex => Left(ConnectionError(ex))
         }
     }
   }

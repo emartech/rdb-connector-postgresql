@@ -1,6 +1,6 @@
 package com.emarsys.rdb.connector.postgresql
 
-import com.emarsys.rdb.connector.common.models.Errors.ErrorWithMessage
+import com.emarsys.rdb.connector.common.models.Errors.{ConnectionConfigError, ConnectionError}
 import com.emarsys.rdb.connector.postgresql.utils.TestHelper
 import org.scalatest.{Matchers, WordSpecLike}
 import slick.util.AsyncExecutor
@@ -32,7 +32,7 @@ class PostgreSqlConnectorItSpec extends WordSpecLike with Matchers {
 
         val connectorEither = Await.result(PostgresWithHikari(TestHelper.TEST_CONNECTION_CONFIG)(AsyncExecutor.default()), 5.seconds)
 
-        connectorEither shouldBe a [Right[_, _]]
+        connectorEither shouldBe a[Right[_, _]]
       }
 
       "connect fail when ssl disabled" in {
@@ -41,7 +41,7 @@ class PostgreSqlConnectorItSpec extends WordSpecLike with Matchers {
         )
         val connectorEither = Await.result(PostgreSqlConnector(conn)(AsyncExecutor.default()), 5.seconds)
 
-        connectorEither shouldBe Left(ErrorWithMessage("SSL Error"))
+        connectorEither shouldBe Left(ConnectionConfigError("SSL Error"))
       }
 
       "connect fail when sslrootcert modified" in {
@@ -50,7 +50,7 @@ class PostgreSqlConnectorItSpec extends WordSpecLike with Matchers {
         )
         val connectorEither = Await.result(PostgreSqlConnector(conn)(AsyncExecutor.default()), 5.seconds)
 
-        connectorEither shouldBe Left(ErrorWithMessage("SSL Error"))
+        connectorEither shouldBe Left(ConnectionConfigError("SSL Error"))
       }
 
       "connect fail when sslmode modified" in {
@@ -59,35 +59,39 @@ class PostgreSqlConnectorItSpec extends WordSpecLike with Matchers {
         )
         val connectorEither = Await.result(PostgreSqlConnector(conn)(AsyncExecutor.default()), 5.seconds)
 
-        connectorEither shouldBe Left(ErrorWithMessage("SSL Error"))
+        connectorEither shouldBe Left(ConnectionConfigError("SSL Error"))
       }
 
       "connect fail when wrong certificate" in {
         val conn = TestHelper.TEST_CONNECTION_CONFIG.copy(certificate = "")
         val connectorEither = Await.result(PostgreSqlConnector(conn)(AsyncExecutor.default()), 5.seconds)
 
-        connectorEither shouldBe Left(ErrorWithMessage("Cannot connect to the sql server"))
+        connectorEither shouldBe a[Left[_, _]]
+        connectorEither.left.get shouldBe a[ConnectionError]
       }
 
       "connect fail when wrong host" in {
         val conn = TestHelper.TEST_CONNECTION_CONFIG.copy(host = "wrong")
         val connectorEither = Await.result(PostgreSqlConnector(conn)(AsyncExecutor.default()), 5.seconds)
 
-        connectorEither shouldBe Left(ErrorWithMessage("Cannot connect to the sql server"))
+        connectorEither shouldBe a[Left[_, _]]
+        connectorEither.left.get shouldBe a[ConnectionError]
       }
 
       "connect fail when wrong user" in {
         val conn = TestHelper.TEST_CONNECTION_CONFIG.copy(dbUser = "")
         val connectorEither = Await.result(PostgreSqlConnector(conn)(AsyncExecutor.default()), 5.seconds)
 
-        connectorEither shouldBe Left(ErrorWithMessage("Cannot connect to the sql server"))
+        connectorEither shouldBe a[Left[_, _]]
+        connectorEither.left.get shouldBe a[ConnectionError]
       }
 
       "connect fail when wrong password" in {
         val conn = TestHelper.TEST_CONNECTION_CONFIG.copy(dbPassword = "")
         val connectorEither = Await.result(PostgreSqlConnector(conn)(AsyncExecutor.default()), 5.seconds)
 
-        connectorEither shouldBe Left(ErrorWithMessage("Cannot connect to the sql server"))
+        connectorEither shouldBe a[Left[_, _]]
+        connectorEither.left.get shouldBe a[ConnectionError]
       }
 
     }

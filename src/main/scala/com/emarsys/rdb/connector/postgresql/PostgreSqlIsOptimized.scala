@@ -1,7 +1,7 @@
 package com.emarsys.rdb.connector.postgresql
 
 import com.emarsys.rdb.connector.common.ConnectorResponse
-import com.emarsys.rdb.connector.common.models.Errors.{ConnectorError, ErrorWithMessage, TableNotFound}
+import com.emarsys.rdb.connector.common.models.Errors.TableNotFound
 import slick.jdbc.PostgresProfile.api._
 import slick.jdbc.SQLActionBuilder
 
@@ -38,6 +38,7 @@ trait PostgreSqlIsOptimized {
         case Nil => Left(TableNotFound(table))
         case resultList => Right(resultList.map(result => isOptimizedHelper(fields.map(_.toLowerCase), result._3.split(", "))).reduce(_ || _))
       })
+      .recover(errorHandler())
   }
 
   private def isOptimizedHelper(fields: Seq[String], resultFields: Seq[String]) : Boolean = {
