@@ -5,8 +5,8 @@ import com.emarsys.rdb.connector.postgresql.utils.TestHelper
 import org.scalatest.{Matchers, WordSpecLike}
 import slick.util.AsyncExecutor
 
-import scala.concurrent.{Await, Future}
-import concurrent.duration._
+import scala.concurrent.Await
+import scala.concurrent.duration._
 
 class PostgreSqlConnectorItSpec extends WordSpecLike with Matchers {
   "PostgreSqlConnector" when {
@@ -22,17 +22,6 @@ class PostgreSqlConnectorItSpec extends WordSpecLike with Matchers {
         connectorEither shouldBe a[Right[_, _]]
 
         connectorEither.right.get.close()
-      }
-
-      "connect ok when hikari enabled" in {
-
-        object PostgresWithHikari extends PostgreSqlConnectorTrait {
-          override val useHikari: Boolean = true
-        }
-
-        val connectorEither = Await.result(PostgresWithHikari(TestHelper.TEST_CONNECTION_CONFIG)(AsyncExecutor.default()), 5.seconds)
-
-        connectorEither shouldBe a[Right[_, _]]
       }
 
       "connect fail when ssl disabled" in {
@@ -101,7 +90,7 @@ class PostgreSqlConnectorItSpec extends WordSpecLike with Matchers {
       "success" in {
         val connection = Await.result(PostgreSqlConnector(TestHelper.TEST_CONNECTION_CONFIG)(executor), 3.seconds).toOption.get
         val result = Await.result(connection.testConnection(), 3.seconds)
-        result shouldBe Right()
+        result shouldBe Right(())
         connection.close()
       }
 

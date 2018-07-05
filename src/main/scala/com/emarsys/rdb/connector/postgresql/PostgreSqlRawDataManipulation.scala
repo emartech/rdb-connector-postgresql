@@ -121,15 +121,6 @@ trait PostgreSqlRawDataManipulation {
     }.mkString(", ")
   }
 
-  private def filterPrivateKeyDefinitions(primaryKeyFields: Seq[String], definitions: Seq[Record]): Seq[Record] = {
-    convertToLowerCaseFieldNames(definitions)
-      .map(_.filterKeys(primaryKeyFields.contains))
-  }
-
-  private def convertToLowerCaseFieldNames(definitions: Seq[Record]): Seq[Record] = {
-    definitions.map(_.map { case (k, v) => (k.toLowerCase, v) })
-  }
-
   private def createInsertQuery(tableName: String, definitions: Seq[Record]) = {
     val table = TableName(tableName).toSql
 
@@ -144,15 +135,6 @@ trait PostgreSqlRawDataManipulation {
     val table = TableName(tableName).toSql
     val condition = Or(criteria.map(createConditionQueryPart)).toSql
     sqlu"DELETE FROM #$table WHERE #$condition"
-  }
-
-  private def getPrimaryKeyFields(tableName: String): Future[Seq[String]] = {
-    db.run(sql"""SELECT a.attname
-                   FROM   pg_index i
-                   JOIN   pg_attribute a ON a.attrelid = i.indrelid
-                   AND    a.attnum = ANY(i.indkey)
-                   WHERE  i.indrelid = '#$tableName'::regclass
-                   AND    i.indisprimary;""".as[String])
   }
 
 }

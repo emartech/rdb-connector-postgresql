@@ -15,6 +15,17 @@ lazy val root = (project in file("."))
 
 resolvers += "jitpack" at "https://jitpack.io"
 
+scalacOptions ++= Seq(
+  "-deprecation",
+  "-encoding", "UTF-8",
+  "-unchecked",
+  "-feature",
+  "-language:implicitConversions",
+  "-language:postfixOps",
+  "-Ywarn-dead-code",
+  "-Xlint"
+)
+
 libraryDependencies ++= {
   val scalaTestV = "3.0.1"
   val slickV = "3.2.0"

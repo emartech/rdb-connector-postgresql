@@ -1,5 +1,7 @@
-- type: serial
-  service: rdb-connector-postgresql
+- type: parallel
   steps:
-  - command: sbt test
-  - command: sbt it:test
+    - service: rdb-connector-postgresql
+      command: sbt test
+    - service: rdb-connector-postgresql
+      command: sbt it:test
+

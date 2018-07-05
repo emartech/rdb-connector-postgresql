@@ -7,7 +7,7 @@ trait PostgreSqlTestConnection {
   self: PostgreSqlConnector =>
 
   override def testConnection(): ConnectorResponse[Unit] = {
-    db.run(sql"SELECT 1".as[Int]).map(_ => Right())
+    db.run(sql"SELECT 1".as[Int]).map(_ => Right(()))
       .recover(errorHandler())
   }
 }

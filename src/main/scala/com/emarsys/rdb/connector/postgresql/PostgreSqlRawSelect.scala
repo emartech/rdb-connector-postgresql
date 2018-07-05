@@ -24,7 +24,7 @@ trait PostgreSqlRawSelect extends PostgreSqlStreamingQuery {
   override def validateRawSelect(rawSql: String): ConnectorResponse[Unit] = {
     val modifiedSql = wrapInExplain(removeEndingSemicolons(rawSql))
     runQueryOnDb(modifiedSql)
-      .map(_ => Right())
+      .map(_ => Right(()))
       .recover(errorHandler())
   }
 
@@ -57,7 +57,7 @@ trait PostgreSqlRawSelect extends PostgreSqlStreamingQuery {
   override def validateProjectedRawSelect(rawSql: String, fields: Seq[String]): ConnectorResponse[Unit] = {
     val wrapInExplainThenRunOnDb = wrapInExplain _ andThen runQueryOnDb
     runProjectedSelectWith(rawSql, fields, allowNullFieldValue = true, wrapInExplainThenRunOnDb)
-      .map(_ => Right())
+      .map(_ => Right(()))
       .recover(errorHandler())
   }
 

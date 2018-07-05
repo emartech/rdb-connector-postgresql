@@ -7,8 +7,8 @@ import com.emarsys.rdb.connector.postgresql.utils.SelectDbInitHelper
 import com.emarsys.rdb.connector.test.RawSelectItSpec
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 
-import concurrent.duration._
-import scala.concurrent.{Await, ExecutionContextExecutor}
+import scala.concurrent.ExecutionContextExecutor
+import scala.concurrent.duration._
 
 class PostgreSqlRawSelectItSpec extends TestKit(ActorSystem()) with RawSelectItSpec with SelectDbInitHelper with WordSpecLike  with Matchers with BeforeAndAfterAll {
 
