@@ -27,7 +27,7 @@ trait PostgreSqlRawDataManipulation {
 
       db.run(DBIO.sequence(queries).transactionally)
         .map(results => Right(results.sum))
-        .recover(errorHandler())
+        .recover(eitherErrorHandler())
     }
   }
 
@@ -39,7 +39,7 @@ trait PostgreSqlRawDataManipulation {
 
       db.run(query)
         .map(result => Right(result))
-        .recover(errorHandler())
+        .recover(eitherErrorHandler())
     }
   }
 
@@ -51,7 +51,7 @@ trait PostgreSqlRawDataManipulation {
 
       db.run(query)
         .map(result => Right(result))
-        .recover(errorHandler())
+        .recover(eitherErrorHandler())
     }
   }
 
@@ -70,7 +70,7 @@ trait PostgreSqlRawDataManipulation {
           )
         )
       )
-      .recover(errorHandler())
+      .recover(eitherErrorHandler())
   }
 
   private def swapTableNames(tableName: String, newTableName: String): Future[Seq[Int]] = {

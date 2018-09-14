@@ -9,15 +9,19 @@ import slick.jdbc.PostgresProfile.api._
 import slick.jdbc.{GetResult, PositionedResult}
 
 import scala.concurrent.Future
+import scala.concurrent.duration.FiniteDuration
 
 trait PostgreSqlStreamingQuery {
   self: PostgreSqlConnector =>
 
-  protected def streamingQuery(query: String): ConnectorResponse[Source[Seq[String], NotUsed]] = {
+  protected def streamingQuery(timeout: FiniteDuration)(query: String): ConnectorResponse[Source[Seq[String], NotUsed]] = {
     val sql = sql"#$query"
       .as(resultConverter)
       .transactionally
-      .withStatementParameters(fetchSize = connectorConfig.streamChunkSize)
+      .withStatementParameters(
+        fetchSize = connectorConfig.streamChunkSize,
+        statementInit = _.setQueryTimeout(timeout.toSeconds.toInt)
+      )
 
     val publisher = db.stream(sql)
     val dbSource = Source
@@ -35,6 +39,7 @@ trait PostgreSqlStreamingQuery {
               List(data._2)
             }
       }
+      .recoverWithRetries(1, streamErrorHandler)
 
     Future.successful(Right(dbSource))
   }

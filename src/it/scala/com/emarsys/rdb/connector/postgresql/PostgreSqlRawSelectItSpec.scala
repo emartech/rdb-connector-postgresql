@@ -3,6 +3,7 @@ package com.emarsys.rdb.connector.postgresql
 import akka.actor.ActorSystem
 import akka.stream.{ActorMaterializer, Materializer}
 import akka.testkit.TestKit
+import com.emarsys.rdb.connector.common.models.Errors.QueryTimeout
 import com.emarsys.rdb.connector.postgresql.utils.SelectDbInitHelper
 import com.emarsys.rdb.connector.test.RawSelectItSpec
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
@@ -40,6 +41,25 @@ class PostgreSqlRawSelectItSpec extends TestKit(ActorSystem()) with RawSelectItS
         Seq ("QUERY PLAN"),
         Seq(s"""Seq Scan on $aTableName  (cost=0.00..1.07 rows=7 width=521)""")
       )
+    }
+  }
+  "#rawSelect" should {
+    "return QueryTimeout when query takes more time than the timeout" in {
+      val result = connector.rawSelect("SELECT PG_SLEEP(2)", None, 1.second)
+
+      a[QueryTimeout] should be thrownBy {
+        getStreamResult(result)
+      }
+    }
+  }
+
+  "#projectedRawSelect" should {
+    "return QueryTimeout when query takes more time than the timeout" in {
+      val result = connector.projectedRawSelect("SELECT PG_SLEEP(2) as sleep", Seq("sleep"), None, 1.second)
+
+      a[QueryTimeout] should be thrownBy {
+        getStreamResult(result)
+      }
     }
   }
 

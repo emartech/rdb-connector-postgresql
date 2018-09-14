@@ -14,7 +14,7 @@ trait PostgreSqlMetadata {
     db.run(sql"SELECT table_name, table_type FROM information_schema.tables WHERE table_schema = $schemaName;".as[(String, String)])
       .map(_.map(parseToTableModel))
       .map(Right(_))
-      .recover(errorHandler())
+      .recover(eitherErrorHandler())
   }
 
   override def listFields(tableName: String): ConnectorResponse[Seq[FieldModel]] = {
@@ -27,7 +27,7 @@ trait PostgreSqlMetadata {
           Right(fields)
         }
       })
-      .recover(errorHandler())
+      .recover(eitherErrorHandler())
   }
 
   override def listTablesWithFields(): ConnectorResponse[Seq[FullTableModel]] = {
@@ -36,7 +36,7 @@ trait PostgreSqlMetadata {
       tablesE <- listTables()
       map <- futureMap
     } yield tablesE.map(makeTablesWithFields(_, map)))
-      .recover(errorHandler())
+      .recover(eitherErrorHandler())
   }
 
   private def listAllFields(): Future[Map[String, Seq[FieldModel]]] = {

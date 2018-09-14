@@ -38,7 +38,7 @@ trait PostgreSqlIsOptimized {
         case Nil => Left(TableNotFound(table))
         case resultList => Right(resultList.map(result => isOptimizedHelper(fields.map(_.toLowerCase), result._3.split(", "))).reduce(_ || _))
       })
-      .recover(errorHandler())
+      .recover(eitherErrorHandler())
   }
 
   private def isOptimizedHelper(fields: Seq[String], resultFields: Seq[String]) : Boolean = {

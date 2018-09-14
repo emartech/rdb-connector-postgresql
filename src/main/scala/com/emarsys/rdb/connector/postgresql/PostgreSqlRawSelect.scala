@@ -7,6 +7,8 @@ import com.emarsys.rdb.connector.common.models.SimpleSelect.FieldName
 import slick.jdbc.MySQLProfile.api._
 
 import scala.annotation.tailrec
+import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration.SECONDS
 
 trait PostgreSqlRawSelect extends PostgreSqlStreamingQuery {
   self: PostgreSqlConnector =>
@@ -15,17 +17,17 @@ trait PostgreSqlRawSelect extends PostgreSqlStreamingQuery {
   import com.emarsys.rdb.connector.common.defaults.SqlWriter._
 
 
-  override def rawSelect(rawSql: String, limit: Option[Int]): ConnectorResponse[Source[Seq[String], NotUsed]] = {
+  override def rawSelect(rawSql: String, limit: Option[Int], timeout: FiniteDuration): ConnectorResponse[Source[Seq[String], NotUsed]] = {
     val query = removeEndingSemicolons(rawSql)
     val limitedQuery = limit.fold(query) { l => wrapInLimit(query, l) }
-    streamingQuery(limitedQuery)
+    streamingQuery(timeout)(limitedQuery)
   }
 
   override def validateRawSelect(rawSql: String): ConnectorResponse[Unit] = {
     val modifiedSql = wrapInExplain(removeEndingSemicolons(rawSql))
     runQueryOnDb(modifiedSql)
       .map(_ => Right(()))
-      .recover(errorHandler())
+      .recover(eitherErrorHandler())
   }
 
   private def runQueryOnDb(modifiedSql: String) = {
@@ -38,7 +40,7 @@ trait PostgreSqlRawSelect extends PostgreSqlStreamingQuery {
 
   override def analyzeRawSelect(rawSql: String): ConnectorResponse[Source[Seq[String], NotUsed]] = {
     val modifiedSql = wrapInExplain(removeEndingSemicolons(rawSql))
-    streamingQuery(modifiedSql)
+    streamingQuery(FiniteDuration(5, SECONDS))(modifiedSql)
   }
 
   private def runProjectedSelectWith[R](rawSql: String, fields: Seq[String], limit: Option[Int], allowNullFieldValue: Boolean, queryRunner: String => R) = {
@@ -52,14 +54,14 @@ trait PostgreSqlRawSelect extends PostgreSqlStreamingQuery {
     queryRunner(limitedQuery)
   }
 
-  override def projectedRawSelect(rawSql: String, fields: Seq[String], limit: Option[Int], allowNullFieldValue: Boolean): ConnectorResponse[Source[Seq[String], NotUsed]] =
-    runProjectedSelectWith(rawSql, fields, limit, allowNullFieldValue, streamingQuery)
+  override def projectedRawSelect(rawSql: String, fields: Seq[String], limit: Option[Int], timeout: FiniteDuration, allowNullFieldValue: Boolean): ConnectorResponse[Source[Seq[String], NotUsed]] =
+    runProjectedSelectWith(rawSql, fields, limit, allowNullFieldValue, streamingQuery(timeout))
 
   override def validateProjectedRawSelect(rawSql: String, fields: Seq[String]): ConnectorResponse[Unit] = {
     val wrapInExplainThenRunOnDb = wrapInExplain _ andThen runQueryOnDb
     runProjectedSelectWith(rawSql, fields, None, allowNullFieldValue = true, wrapInExplainThenRunOnDb)
       .map(_ => Right(()))
-      .recover(errorHandler())
+      .recover(eitherErrorHandler())
   }
 
 
