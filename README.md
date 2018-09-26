@@ -1,7 +1,4 @@
-# Rdb - connector - postgresql
-
-[ ![Codeship Status for emartech/rdb-connector-postgresql](https://app.codeship.com/projects/d058b740-c631-0135-58f5-765f5301b108/status?branch=master)](https://app.codeship.com/projects/261124)
-[![](https://www.jitpack.io/v/emartech/rdb-connector-postgresql.svg)](https://www.jitpack.io/#emartech/rdb-connector-postgresql)
+# Rdb - connector - postgresql [![Codeship Status for emartech/rdb-connector-postgresql](https://app.codeship.com/projects/d058b740-c631-0135-58f5-765f5301b108/status?branch=master)](https://app.codeship.com/projects/261124) [![](https://www.jitpack.io/v/emartech/rdb-connector-postgresql.svg)](https://www.jitpack.io/#emartech/rdb-connector-postgresql)
 
 ## Definitions:
 
