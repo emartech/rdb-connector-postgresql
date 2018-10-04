@@ -83,36 +83,43 @@ trait PostgreSqlConnectorTrait extends ConnectorCompanion {
 
   override def meta() = MetaData("\"", "'", "\\")
 
-  def apply(config: PostgreSqlConnectionConfig, connectorConfig: PostgreSqlConnectorConfig = defaultConfig)(
-      executor: AsyncExecutor
-  )(implicit executionContext: ExecutionContext): ConnectorResponse[PostgreSqlConnector] = {
+  def apply(
+      config: PostgreSqlConnectionConfig,
+      connectorConfig: PostgreSqlConnectorConfig = defaultConfig,
+      configPath: String = "postgredb"
+  )(executor: AsyncExecutor)(implicit executionContext: ExecutionContext): ConnectorResponse[PostgreSqlConnector] = {
     val poolName = UUID.randomUUID.toString
 
     if (!checkSsl(config.connectionParams)) {
       Future.successful(Left(ConnectionConfigError("SSL Error")))
     } else {
-      configureDb(config, poolName).flatMap(checkConnection(connectorConfig, poolName, config))
+      configureDb(config, configPath, poolName).flatMap(checkConnection(connectorConfig, poolName, config))
     }
   }
 
-  private def configureDb(config: PostgreSqlConnector.PostgreSqlConnectionConfig, poolName: String) = {
+  private def configureDb(
+      config: PostgreSqlConnector.PostgreSqlConnectionConfig,
+      configPath: String,
+      poolName: String
+  ) = {
     val customDbConf = ConfigFactory
       .load()
-      .withValue("postgredb.poolName", ConfigValueFactory.fromAnyRef(poolName))
-      .withValue("postgredb.registerMbeans", ConfigValueFactory.fromAnyRef(true))
-      .withValue("postgredb.properties.url", ConfigValueFactory.fromAnyRef(createUrl(config)))
-      .withValue("postgredb.properties.user", ConfigValueFactory.fromAnyRef(config.dbUser))
-      .withValue("postgredb.properties.password", ConfigValueFactory.fromAnyRef(config.dbPassword))
-      .withValue("postgredb.properties.driver", ConfigValueFactory.fromAnyRef("org.postgresql.Driver"))
-      .withValue("postgredb.properties.properties.ssl", ConfigValueFactory.fromAnyRef("true"))
-      .withValue("postgredb.properties.properties.sslmode", ConfigValueFactory.fromAnyRef("verify-ca"))
-      .withValue("postgredb.properties.properties.loggerLevel", ConfigValueFactory.fromAnyRef("OFF"))
+      .getConfig(configPath)
+      .withValue("poolName", ConfigValueFactory.fromAnyRef(poolName))
+      .withValue("registerMbeans", ConfigValueFactory.fromAnyRef(true))
+      .withValue("properties.url", ConfigValueFactory.fromAnyRef(createUrl(config)))
+      .withValue("properties.user", ConfigValueFactory.fromAnyRef(config.dbUser))
+      .withValue("properties.password", ConfigValueFactory.fromAnyRef(config.dbPassword))
+      .withValue("properties.driver", ConfigValueFactory.fromAnyRef("org.postgresql.Driver"))
+      .withValue("properties.properties.ssl", ConfigValueFactory.fromAnyRef("true"))
+      .withValue("properties.properties.sslmode", ConfigValueFactory.fromAnyRef("verify-ca"))
+      .withValue("properties.properties.loggerLevel", ConfigValueFactory.fromAnyRef("OFF"))
       .withValue(
-        "postgredb.properties.properties.sslrootcert",
+        "properties.properties.sslrootcert",
         ConfigValueFactory.fromAnyRef(createTempFile(config.certificate))
       )
 
-    Future.successful(Database.forConfig("postgredb", customDbConf))
+    Future.successful(Database.forConfig("", customDbConf))
   }
 
   private def checkConnection(
