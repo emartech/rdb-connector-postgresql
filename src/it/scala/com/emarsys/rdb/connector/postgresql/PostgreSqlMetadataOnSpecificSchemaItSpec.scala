@@ -38,7 +38,8 @@ class PostgreSqlMetadataOnSpecificSchemaItSpec extends MetadataItSpec {
     db.run(sqlu"""#$sql""")
   }
 
-  val connector: Connector = Await.result(PostgreSqlConnector(configWithSchema)(AsyncExecutor.default()), 5.seconds).right.get
+  val connector: Connector =
+    Await.result(PostgreSqlConnector(configWithSchema)(AsyncExecutor.default()), 5.seconds).right.get
 
   override val awaitTimeout = 15.seconds
 
@@ -61,7 +62,7 @@ class PostgreSqlMetadataOnSpecificSchemaItSpec extends MetadataItSpec {
   }
 
   def cleanUpDb(): Unit = {
-    val dropViewSql = s"""DROP VIEW "$viewName";"""
+    val dropViewSql  = s"""DROP VIEW "$viewName";"""
     val dropTableSql = s"""DROP TABLE "$tableName";"""
     Await.result(for {
       _ <- executeQuery(dropViewSql)

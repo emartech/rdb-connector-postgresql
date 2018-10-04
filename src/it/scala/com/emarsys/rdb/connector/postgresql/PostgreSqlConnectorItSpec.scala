@@ -12,12 +12,13 @@ class PostgreSqlConnectorItSpec extends WordSpecLike with Matchers {
   "PostgreSqlConnector" when {
 
     implicit val executionContext = scala.concurrent.ExecutionContext.Implicits.global
-    val executor = AsyncExecutor.default()
+    val executor                  = AsyncExecutor.default()
 
     "create connector" should {
 
       "connect success" in {
-        val connectorEither = Await.result(PostgreSqlConnector(TestHelper.TEST_CONNECTION_CONFIG)(AsyncExecutor.default()), 5.seconds)
+        val connectorEither =
+          Await.result(PostgreSqlConnector(TestHelper.TEST_CONNECTION_CONFIG)(AsyncExecutor.default()), 5.seconds)
 
         connectorEither shouldBe a[Right[_, _]]
 
@@ -52,7 +53,7 @@ class PostgreSqlConnectorItSpec extends WordSpecLike with Matchers {
       }
 
       "connect fail when wrong certificate" in {
-        val conn = TestHelper.TEST_CONNECTION_CONFIG.copy(certificate = "")
+        val conn            = TestHelper.TEST_CONNECTION_CONFIG.copy(certificate = "")
         val connectorEither = Await.result(PostgreSqlConnector(conn)(AsyncExecutor.default()), 5.seconds)
 
         connectorEither shouldBe a[Left[_, _]]
@@ -60,7 +61,7 @@ class PostgreSqlConnectorItSpec extends WordSpecLike with Matchers {
       }
 
       "connect fail when wrong host" in {
-        val conn = TestHelper.TEST_CONNECTION_CONFIG.copy(host = "wrong")
+        val conn            = TestHelper.TEST_CONNECTION_CONFIG.copy(host = "wrong")
         val connectorEither = Await.result(PostgreSqlConnector(conn)(AsyncExecutor.default()), 5.seconds)
 
         connectorEither shouldBe a[Left[_, _]]
@@ -68,7 +69,7 @@ class PostgreSqlConnectorItSpec extends WordSpecLike with Matchers {
       }
 
       "connect fail when wrong user" in {
-        val conn = TestHelper.TEST_CONNECTION_CONFIG.copy(dbUser = "")
+        val conn            = TestHelper.TEST_CONNECTION_CONFIG.copy(dbUser = "")
         val connectorEither = Await.result(PostgreSqlConnector(conn)(AsyncExecutor.default()), 5.seconds)
 
         connectorEither shouldBe a[Left[_, _]]
@@ -76,7 +77,7 @@ class PostgreSqlConnectorItSpec extends WordSpecLike with Matchers {
       }
 
       "connect fail when wrong password" in {
-        val conn = TestHelper.TEST_CONNECTION_CONFIG.copy(dbPassword = "")
+        val conn            = TestHelper.TEST_CONNECTION_CONFIG.copy(dbPassword = "")
         val connectorEither = Await.result(PostgreSqlConnector(conn)(AsyncExecutor.default()), 5.seconds)
 
         connectorEither shouldBe a[Left[_, _]]
@@ -88,7 +89,8 @@ class PostgreSqlConnectorItSpec extends WordSpecLike with Matchers {
     "#testConnection" should {
 
       "success" in {
-        val connection = Await.result(PostgreSqlConnector(TestHelper.TEST_CONNECTION_CONFIG)(executor), 3.seconds).toOption.get
+        val connection =
+          Await.result(PostgreSqlConnector(TestHelper.TEST_CONNECTION_CONFIG)(executor), 3.seconds).toOption.get
         val result = Await.result(connection.testConnection(), 3.seconds)
         result shouldBe Right(())
         connection.close()

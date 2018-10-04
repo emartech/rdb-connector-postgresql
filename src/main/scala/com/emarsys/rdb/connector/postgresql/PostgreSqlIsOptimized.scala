@@ -9,7 +9,7 @@ trait PostgreSqlIsOptimized {
   self: PostgreSqlConnector with PostgreSqlMetadata =>
 
   override def isOptimized(table: String, fields: Seq[String]): ConnectorResponse[Boolean] = {
-     val query: SQLActionBuilder = sql"""select
+    val query: SQLActionBuilder = sql"""select
               |    t.relname as table_name,
               |    i.relname as index_name,
               |    array_to_string(array_agg(a.attname), ', ') as column_names
@@ -32,19 +32,21 @@ trait PostgreSqlIsOptimized {
               |    t.relname,
               |    i.relname;""".stripMargin
 
-
     db.run(query.as[(String, String, String)])
       .map(_.toList match {
         case Nil => Left(TableNotFound(table))
-        case resultList => Right(resultList.map(result => isOptimizedHelper(fields.map(_.toLowerCase), result._3.split(", "))).reduce(_ || _))
+        case resultList =>
+          Right(
+            resultList.map(result => isOptimizedHelper(fields.map(_.toLowerCase), result._3.split(", "))).reduce(_ || _)
+          )
       })
       .recover(eitherErrorHandler())
   }
 
-  private def isOptimizedHelper(fields: Seq[String], resultFields: Seq[String]) : Boolean = {
+  private def isOptimizedHelper(fields: Seq[String], resultFields: Seq[String]): Boolean = {
     fields match {
       case head :: Nil => head.equals(resultFields.head)
-      case _ => resultFields.toSet.equals(fields.toSet)
+      case _           => resultFields.toSet.equals(fields.toSet)
     }
   }
 }

@@ -35,7 +35,7 @@ class PostgreSqlSimpleSelectItSpec extends TestKit(ActorSystem()) with SimpleSel
          |    C varchar(255) NOT NULL
          |);""".stripMargin
 
-    val createFunction = """CREATE OR REPLACE FUNCTION do_sleep() RETURNS integer AS $$
+    val createFunction     = """CREATE OR REPLACE FUNCTION do_sleep() RETURNS integer AS $$
                            |        BEGIN
                            |                PERFORM PG_SLEEP(2);
                            |                RETURN 1;
@@ -50,12 +50,15 @@ class PostgreSqlSimpleSelectItSpec extends TestKit(ActorSystem()) with SimpleSel
          |('c3')
          |;""".stripMargin
 
-    Await.result(for {
-      _ <- TestHelper.executeQuery(createCTableSql)
-      _ <- TestHelper.executeQuery(insertCDataSql)
-      _ <- TestHelper.executeQuery(createFunction)
-      _ <- TestHelper.executeQuery(createSleepViewSql)
-    } yield (), 5.seconds)
+    Await.result(
+      for {
+        _ <- TestHelper.executeQuery(createCTableSql)
+        _ <- TestHelper.executeQuery(insertCDataSql)
+        _ <- TestHelper.executeQuery(createFunction)
+        _ <- TestHelper.executeQuery(createSleepViewSql)
+      } yield (),
+      5.seconds
+    )
   }
 
   override def cleanUpDb(): Unit = {

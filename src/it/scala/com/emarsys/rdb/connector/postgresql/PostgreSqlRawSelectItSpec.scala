@@ -11,7 +11,13 @@ import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.duration._
 
-class PostgreSqlRawSelectItSpec extends TestKit(ActorSystem()) with RawSelectItSpec with SelectDbInitHelper with WordSpecLike  with Matchers with BeforeAndAfterAll {
+class PostgreSqlRawSelectItSpec
+    extends TestKit(ActorSystem())
+    with RawSelectItSpec
+    with SelectDbInitHelper
+    with WordSpecLike
+    with Matchers
+    with BeforeAndAfterAll {
 
   implicit val materializer: Materializer = ActorMaterializer()
 
@@ -29,8 +35,8 @@ class PostgreSqlRawSelectItSpec extends TestKit(ActorSystem()) with RawSelectItS
     initDb()
   }
 
-  override val simpleSelect = s"""SELECT * FROM "$aTableName";"""
-  override val badSimpleSelect = s"""SELECT * ForM "$aTableName""""
+  override val simpleSelect            = s"""SELECT * FROM "$aTableName";"""
+  override val badSimpleSelect         = s"""SELECT * ForM "$aTableName""""
   override val simpleSelectNoSemicolon = s"""SELECT * FROM "$aTableName""""
 
   "#analyzeRawSelect" should {
@@ -38,7 +44,7 @@ class PostgreSqlRawSelectItSpec extends TestKit(ActorSystem()) with RawSelectItS
       val result = getStreamResult(connector.analyzeRawSelect(simpleSelect))
 
       result shouldEqual Seq(
-        Seq ("QUERY PLAN"),
+        Seq("QUERY PLAN"),
         Seq(s"""Seq Scan on $aTableName  (cost=0.00..1.07 rows=7 width=521)""")
       )
     }

@@ -20,7 +20,7 @@ trait PostgreSqlRawDataManipulation {
     } else {
       val table = TableName(tableName).toSql
       val queries = definitions.map { definition =>
-        val setPart = createSetQueryPart(definition.update)
+        val setPart   = createSetQueryPart(definition.update)
         val wherePart = createConditionQueryPart(definition.search).toSql
         sqlu"UPDATE #$table SET #$setPart WHERE #$wherePart"
       }
@@ -56,28 +56,29 @@ trait PostgreSqlRawDataManipulation {
   }
 
   override def rawReplaceData(tableName: String, definitions: Seq[Record]): ConnectorResponse[Int] = {
-    val newTableName = generateTempTableName(tableName)
-    val newTable = TableName(newTableName).toSql
-    val table = TableName(tableName).toSql
+    val newTableName     = generateTempTableName(tableName)
+    val newTable         = TableName(newTableName).toSql
+    val table            = TableName(tableName).toSql
     val createTableQuery = sqlu"CREATE TABLE #$newTable ( LIKE #$table INCLUDING DEFAULTS )"
-    val dropTableQuery = sqlu"DROP TABLE IF EXISTS #$newTable"
+    val dropTableQuery   = sqlu"DROP TABLE IF EXISTS #$newTable"
 
     db.run(createTableQuery)
-      .flatMap(_ =>
-        rawInsertData(newTableName, definitions).flatMap(insertedCount =>
-          swapTableNames(tableName, newTableName).flatMap(_ =>
-            db.run(dropTableQuery).map(_ => insertedCount)
+      .flatMap(
+        _ =>
+          rawInsertData(newTableName, definitions).flatMap(
+            insertedCount =>
+              swapTableNames(tableName, newTableName).flatMap(_ => db.run(dropTableQuery).map(_ => insertedCount))
           )
-        )
       )
       .recover(eitherErrorHandler())
   }
 
   private def swapTableNames(tableName: String, newTableName: String): Future[Seq[Int]] = {
     val temporaryTableName = generateTempTableName()
-    val tablePairs = Seq((tableName, temporaryTableName), (newTableName, tableName), (temporaryTableName, newTableName))
+    val tablePairs         = Seq((tableName, temporaryTableName), (newTableName, tableName), (temporaryTableName, newTableName))
     val queries = tablePairs.map({
-      case (from, to) => TableName(from).toSql + " TO " + TableName(to).toSql
+      case (from, to) =>
+        TableName(from).toSql + " TO " + TableName(to).toSql
         sqlu"ALTER TABLE #${TableName(from).toSql} RENAME TO #${TableName(to).toSql}"
     })
     db.run(DBIO.sequence(queries).transactionally)
@@ -85,7 +86,7 @@ trait PostgreSqlRawDataManipulation {
 
   private def generateTempTableName(original: String = ""): String = {
     val shortedName = if (original.length > 30) original.take(30) else original
-    val id = java.util.UUID.randomUUID().toString.replace("-", "").take(30)
+    val id          = java.util.UUID.randomUUID().toString.replace("-", "").take(30)
     shortedName + "_" + id
   }
 
@@ -97,7 +98,8 @@ trait PostgreSqlRawDataManipulation {
     import com.emarsys.rdb.connector.common.defaults.FieldValueConverter._
     import fieldValueConverters._
 
-    data.map(_.map(_.toSimpleSelectValue.map(_.toSql).getOrElse("NULL")).mkString(", "))
+    data
+      .map(_.map(_.toSimpleSelectValue.map(_.toSql).getOrElse("NULL")).mkString(", "))
       .mkString("(", "),(", ")")
   }
 
@@ -105,26 +107,34 @@ trait PostgreSqlRawDataManipulation {
     import com.emarsys.rdb.connector.common.defaults.FieldValueConverter._
     import fieldValueConverters._
 
-    And(criteria.mapValues(_.toSimpleSelectValue).map {
-      case (field, Some(value)) => EqualToValue(FieldName(field), value)
-      case (field, None)        => IsNull(FieldName(field))
-    }.toList)
+    And(
+      criteria
+        .mapValues(_.toSimpleSelectValue)
+        .map {
+          case (field, Some(value)) => EqualToValue(FieldName(field), value)
+          case (field, None)        => IsNull(FieldName(field))
+        }
+        .toList
+    )
   }
 
   private def createSetQueryPart(criteria: Map[String, FieldValueWrapper]) = {
     import com.emarsys.rdb.connector.common.defaults.FieldValueConverter._
     import fieldValueConverters._
 
-    criteria.mapValues(_.toSimpleSelectValue).map {
-      case (field, Some(value)) => EqualToValue(FieldName(field), value).toSql
-      case (field, None)        => FieldName(field).toSql + "=NULL"
-    }.mkString(", ")
+    criteria
+      .mapValues(_.toSimpleSelectValue)
+      .map {
+        case (field, Some(value)) => EqualToValue(FieldName(field), value).toSql
+        case (field, None)        => FieldName(field).toSql + "=NULL"
+      }
+      .mkString(", ")
   }
 
   private def createInsertQuery(tableName: String, definitions: Seq[Record]) = {
     val table = TableName(tableName).toSql
 
-    val fields = definitions.head.keySet.toSeq
+    val fields    = definitions.head.keySet.toSeq
     val fieldList = fields.map(FieldName(_).toSql).mkString("(", ",", ")")
     val valueList = makeSqlValueList(orderValues(definitions, fields))
 
@@ -132,7 +142,7 @@ trait PostgreSqlRawDataManipulation {
   }
 
   private def createDeleteQuery(tableName: String, criteria: Seq[Criteria]) = {
-    val table = TableName(tableName).toSql
+    val table     = TableName(tableName).toSql
     val condition = Or(criteria.map(createConditionQueryPart)).toSql
     sqlu"DELETE FROM #$table WHERE #$condition"
   }

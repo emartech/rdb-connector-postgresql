@@ -13,14 +13,13 @@ import scala.concurrent.duration._
 
 class PostgreSqlIsOptimizedSpec extends WordSpecLike with Matchers with BeforeAndAfterAll {
   implicit val executionContext = scala.concurrent.ExecutionContext.Implicits.global
-  val awaitTimeout = 5.seconds
-  val awaitTimeoutLong = 15.seconds
+  val awaitTimeout              = 5.seconds
+  val awaitTimeoutLong          = 15.seconds
 
-  val uuid = UUID.randomUUID().toString
-  val tableName = s"is_optimized_table_$uuid"
+  val uuid       = UUID.randomUUID().toString
+  val tableName  = s"is_optimized_table_$uuid"
   val index1Name = s"is_optimized_index1_$uuid"
   val index2Name = s"is_optimized_index2_$uuid"
-
 
   override def beforeAll(): Unit = {
     initDb()
@@ -31,7 +30,10 @@ class PostgreSqlIsOptimizedSpec extends WordSpecLike with Matchers with BeforeAn
     connector.close()
   }
 
-  val connector: Connector = Await.result(PostgreSqlConnector(TestHelper.TEST_CONNECTION_CONFIG)(AsyncExecutor.default()), awaitTimeoutLong).right.get
+  val connector: Connector = Await
+    .result(PostgreSqlConnector(TestHelper.TEST_CONNECTION_CONFIG)(AsyncExecutor.default()), awaitTimeoutLong)
+    .right
+    .get
 
   def initDb(): Unit = {
     val createTableSql =
@@ -50,11 +52,14 @@ class PostgreSqlIsOptimizedSpec extends WordSpecLike with Matchers with BeforeAn
     val createIndex2Sql =
       s"""CREATE INDEX "$index2Name" ON "$tableName" (a4, a5, a6);""".stripMargin
 
-    Await.result(for {
-      _ <- TestHelper.executeQuery(createTableSql)
-      _ <- TestHelper.executeQuery(createIndex1Sql)
-      _ <- TestHelper.executeQuery(createIndex2Sql)
-    } yield (), awaitTimeout)
+    Await.result(
+      for {
+        _ <- TestHelper.executeQuery(createTableSql)
+        _ <- TestHelper.executeQuery(createIndex1Sql)
+        _ <- TestHelper.executeQuery(createIndex2Sql)
+      } yield (),
+      awaitTimeout
+    )
   }
 
   def cleanUpDb(): Unit = {

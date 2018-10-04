@@ -11,7 +11,8 @@ import concurrent.ExecutionContext.Implicits.global
 
 class PostgreSqlMetadataItSpec extends MetadataItSpec {
 
-  val connector: Connector = Await.result(PostgreSqlConnector(TestHelper.TEST_CONNECTION_CONFIG)(AsyncExecutor.default()), 5.seconds).right.get
+  val connector: Connector =
+    Await.result(PostgreSqlConnector(TestHelper.TEST_CONNECTION_CONFIG)(AsyncExecutor.default()), 5.seconds).right.get
 
   override val awaitTimeout = 15.seconds
 
@@ -34,7 +35,7 @@ class PostgreSqlMetadataItSpec extends MetadataItSpec {
   }
 
   def cleanUpDb(): Unit = {
-    val dropViewSql = s"""DROP VIEW "$viewName";"""
+    val dropViewSql  = s"""DROP VIEW "$viewName";"""
     val dropTableSql = s"""DROP TABLE "$tableName";"""
     Await.result(for {
       _ <- TestHelper.executeQuery(dropViewSql)

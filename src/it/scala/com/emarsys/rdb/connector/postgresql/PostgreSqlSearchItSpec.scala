@@ -14,7 +14,8 @@ import scala.concurrent.duration._
 class PostgreSqlSearchItSpec extends TestKit(ActorSystem()) with SearchItSpec {
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  val connector: Connector = Await.result(PostgreSqlConnector(TestHelper.TEST_CONNECTION_CONFIG)(AsyncExecutor.default()), 5.seconds).right.get
+  val connector: Connector =
+    Await.result(PostgreSqlConnector(TestHelper.TEST_CONNECTION_CONFIG)(AsyncExecutor.default()), 5.seconds).right.get
 
   override implicit val materializer: Materializer = ActorMaterializer()
 
@@ -50,12 +51,15 @@ class PostgreSqlSearchItSpec extends TestKit(ActorSystem()) with SearchItSpec {
     val addIndex2 =
       s"""CREATE INDEX "${tableName.dropRight(5)}_idx2" ON "$tableName" (Z3);"""
 
-    Await.result(for {
-      _ <- TestHelper.executeQuery(createZTableSql)
-      _ <- TestHelper.executeQuery(insertZDataSql)
-      _ <- TestHelper.executeQuery(addIndex1)
-      _ <- TestHelper.executeQuery(addIndex2)
-    } yield (), 5.seconds)
+    Await.result(
+      for {
+        _ <- TestHelper.executeQuery(createZTableSql)
+        _ <- TestHelper.executeQuery(insertZDataSql)
+        _ <- TestHelper.executeQuery(addIndex1)
+        _ <- TestHelper.executeQuery(addIndex2)
+      } yield (),
+      5.seconds
+    )
   }
 
   def cleanUpDb(): Unit = {

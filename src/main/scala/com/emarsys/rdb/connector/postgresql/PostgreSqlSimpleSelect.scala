@@ -12,7 +12,10 @@ import scala.concurrent.duration.FiniteDuration
 trait PostgreSqlSimpleSelect extends PostgreSqlStreamingQuery {
   self: PostgreSqlConnector =>
 
-  override def simpleSelect(select: SimpleSelect, timeout: FiniteDuration): ConnectorResponse[Source[Seq[String], NotUsed]] = {
+  override def simpleSelect(
+      select: SimpleSelect,
+      timeout: FiniteDuration
+  ): ConnectorResponse[Source[Seq[String], NotUsed]] = {
     streamingQuery(timeout)(select.toSql)
   }
 }

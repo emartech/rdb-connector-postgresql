@@ -21,4 +21,3 @@ class PostgreSqlDeleteItSpec extends TestKit(ActorSystem()) with DeleteItSpec wi
   }
 
 }
-

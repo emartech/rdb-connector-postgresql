@@ -12,7 +12,7 @@ import org.scalatest.{Matchers, WordSpecLike}
 import slick.jdbc.PostgresProfile.api._
 import spray.json._
 
-class PostgreSqlConnectorSpec extends WordSpecLike with Matchers with MockitoSugar{
+class PostgreSqlConnectorSpec extends WordSpecLike with Matchers with MockitoSugar {
 
   "PostgreSqlConnectorSpec" when {
 
@@ -41,7 +41,6 @@ class PostgreSqlConnectorSpec extends WordSpecLike with Matchers with MockitoSug
         val exampleWithoutMark = exampleConnection.copy(connectionParams = "")
         PostgreSqlConnector.createUrl(exampleWithoutMark) shouldBe "jdbc:postgresql://host:123/database"
       }
-
 
     }
 
@@ -82,7 +81,7 @@ class PostgreSqlConnectorSpec extends WordSpecLike with Matchers with MockitoSug
       implicit val executionContext = concurrent.ExecutionContext.Implicits.global
 
       "return Json in happy case" in {
-        val mxPool = new HikariPoolMXBean{
+        val mxPool = new HikariPoolMXBean {
           override def resumePool(): Unit = ???
 
           override def softEvictConnections(): Unit = ???
@@ -99,13 +98,13 @@ class PostgreSqlConnectorSpec extends WordSpecLike with Matchers with MockitoSug
         }
 
         val poolName = UUID.randomUUID.toString
-        val db = mock[Database]
+        val db       = mock[Database]
 
-        val mbs:MBeanServer = ManagementFactory.getPlatformMBeanServer()
-        val mBeanName:ObjectName = new ObjectName(s"com.zaxxer.hikari:type=Pool ($poolName)")
-        mbs.registerMBean( mxPool, mBeanName)
+        val mbs: MBeanServer      = ManagementFactory.getPlatformMBeanServer()
+        val mBeanName: ObjectName = new ObjectName(s"com.zaxxer.hikari:type=Pool ($poolName)")
+        mbs.registerMBean(mxPool, mBeanName)
 
-        val connector = new PostgreSqlConnector(db, PostgreSqlConnector.defaultConfig, poolName, "public")
+        val connector   = new PostgreSqlConnector(db, PostgreSqlConnector.defaultConfig, poolName, "public")
         val metricsJson = connector.innerMetrics().parseJson.asJsObject
 
         metricsJson.fields.size shouldEqual 4
@@ -113,9 +112,9 @@ class PostgreSqlConnectorSpec extends WordSpecLike with Matchers with MockitoSug
       }
 
       "return Json in sad case" in {
-        val db = mock[Database]
-        val poolName = ""
-        val connector = new PostgreSqlConnector(db, PostgreSqlConnector.defaultConfig, poolName, "public")
+        val db          = mock[Database]
+        val poolName    = ""
+        val connector   = new PostgreSqlConnector(db, PostgreSqlConnector.defaultConfig, poolName, "public")
         val metricsJson = connector.innerMetrics().parseJson.asJsObject
         metricsJson.fields.size shouldEqual 0
       }

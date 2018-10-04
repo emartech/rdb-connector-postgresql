@@ -12,7 +12,7 @@ trait PostgreSqlErrorHandling {
 
   private def errorHandler(): PartialFunction[Throwable, ConnectorError] = {
     case ex: PSQLException if ex.getSQLState == PSQL_STAT_QUERY_CANCELLED => QueryTimeout(ex.getMessage)
-    case ex: Exception => ConnectionError(ex)
+    case ex: Exception                                                    => ConnectionError(ex)
   }
 
   protected def eitherErrorHandler[T](): PartialFunction[Throwable, Either[ConnectorError, T]] =
