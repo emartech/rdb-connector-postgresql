@@ -1,7 +1,10 @@
 - type: parallel
+  name: Running tests in parallel
   steps:
     - service: rdb-connector-postgresql
       command: sbt test
+      name: Unit tests
     - service: rdb-connector-postgresql
       command: sbt it:test
+      name: Integration tests
 
