@@ -7,3 +7,5 @@ RUN chown postgres.postgres /usr/share/postgresql/9.5/postgresql.conf.sample \
                             /var/ssl/server.crt \
                             /var/ssl/root.crt && \
     chmod 600 /var/ssl/server.key
+
+COPY initdb.d/init-unprivileged-user.sh /docker-entrypoint-initdb.d/init-unprivileged-user.sh
