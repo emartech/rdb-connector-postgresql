@@ -5,7 +5,7 @@ import akka.stream.{ActorMaterializer, Materializer}
 import akka.testkit.TestKit
 import com.emarsys.rdb.connector.common.models.Errors.QueryTimeout
 import com.emarsys.rdb.connector.postgresql.utils.SelectDbInitHelper
-import com.emarsys.rdb.connector.test.RawSelectItSpec
+import com.emarsys.rdb.connector.test._
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 
 import scala.concurrent.ExecutionContextExecutor
@@ -41,7 +41,7 @@ class PostgreSqlRawSelectItSpec
 
   "#analyzeRawSelect" should {
     "return result" in {
-      val result = getStreamResult(connector.analyzeRawSelect(simpleSelect))
+      val result = getConnectorResult(connector.analyzeRawSelect(simpleSelect), awaitTimeout)
 
       result shouldEqual Seq(
         Seq("QUERY PLAN"),
@@ -54,7 +54,7 @@ class PostgreSqlRawSelectItSpec
       val result = connector.rawSelect("SELECT PG_SLEEP(2)", None, 1.second)
 
       a[QueryTimeout] should be thrownBy {
-        getStreamResult(result)
+        getConnectorResult(result, awaitTimeout)
       }
     }
   }
@@ -64,7 +64,7 @@ class PostgreSqlRawSelectItSpec
       val result = connector.projectedRawSelect("SELECT PG_SLEEP(2) as sleep", Seq("sleep"), None, 1.second)
 
       a[QueryTimeout] should be thrownBy {
-        getStreamResult(result)
+        getConnectorResult(result, awaitTimeout)
       }
     }
   }
