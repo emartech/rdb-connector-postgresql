@@ -4,7 +4,7 @@ import java.io.{File, PrintWriter}
 import java.util.UUID
 
 import com.emarsys.rdb.connector.common.ConnectorResponse
-import com.emarsys.rdb.connector.common.models.Errors.{ConnectionConfigError, ConnectionError, ConnectorError}
+import com.emarsys.rdb.connector.common.models.Errors.{ConnectionConfigError, ConnectorError}
 import com.emarsys.rdb.connector.common.models._
 import com.emarsys.rdb.connector.postgresql.PostgreSqlConnector.{PostgreSqlConnectionConfig, PostgreSqlConnectorConfig}
 import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
@@ -75,7 +75,7 @@ object PostgreSqlConnector extends PostgreSqlConnectorTrait {
 
 }
 
-trait PostgreSqlConnectorTrait extends ConnectorCompanion {
+trait PostgreSqlConnectorTrait extends ConnectorCompanion with PostgreSqlErrorHandling {
   private[postgresql] val defaultConfig = PostgreSqlConnectorConfig(
     queryTimeout = 20.minutes,
     streamChunkSize = 5000
@@ -129,9 +129,7 @@ trait PostgreSqlConnectorTrait extends ConnectorCompanion {
   )(db: Database)(implicit ec: ExecutionContext) =
     isConnectionAvailable(db) map [Either[ConnectorError, PostgreSqlConnector]] { _ =>
       Right(new PostgreSqlConnector(db, connectorConfig, poolName, createSchemaName(config)))
-    } recover {
-      case ex => Left(ConnectionError(ex))
-    } map {
+    } recover eitherErrorHandler() map {
       case Left(e) =>
         db.shutdown
         Left(e)
