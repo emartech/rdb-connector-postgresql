@@ -23,8 +23,6 @@ class PostgreSqlErrorHandlingSpec extends WordSpecLike with Matchers with Mockit
       val unknownFailure = new SQLException("not-handled-message", "not-handled-state", new Exception(""))
       val timeout        = 1.second
 
-      handler invokePrivate eitherErrorHandler()
-
       Await.result(Future.failed(unknownFailure).recover(handler invokePrivate eitherErrorHandler()), timeout) shouldBe
         Left(ErrorWithMessage("[not-handled-state] - not-handled-message"))
     }
