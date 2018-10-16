@@ -1,6 +1,6 @@
 package com.emarsys.rdb.connector.postgresql
 
-import java.sql.SQLTransientConnectionException
+import java.sql.SQLException
 
 import akka.NotUsed
 import akka.stream.scaladsl.Source
@@ -27,12 +27,13 @@ trait PostgreSqlErrorHandling {
   )
 
   private def errorHandler(): PartialFunction[Throwable, ConnectorError] = {
-    case ex: PSQLException if ex.getSQLState == PSQL_STATE_QUERY_CANCELLED                => QueryTimeout(ex.getMessage)
-    case ex: PSQLException if ex.getSQLState == PSQL_STATE_SYNTAX_ERROR                   => SqlSyntaxError(ex.getMessage)
-    case ex: PSQLException if ex.getSQLState == PSQL_STATE_PERMISSION_DENIED              => AccessDeniedError(ex.getMessage)
-    case ex: PSQLException if ex.getSQLState == PSQL_STATE_RELATION_NOT_FOUND             => TableNotFound(ex.getMessage)
-    case ex: SQLTransientConnectionException if connectionErrors.contains(ex.getSQLState) => ConnectionError(ex)
-    case ex: Exception                                                                    => ErrorWithMessage(ex.getMessage)
+    case ex: PSQLException if ex.getSQLState == PSQL_STATE_QUERY_CANCELLED    => QueryTimeout(ex.getMessage)
+    case ex: PSQLException if ex.getSQLState == PSQL_STATE_SYNTAX_ERROR       => SqlSyntaxError(ex.getMessage)
+    case ex: PSQLException if ex.getSQLState == PSQL_STATE_PERMISSION_DENIED  => AccessDeniedError(ex.getMessage)
+    case ex: PSQLException if ex.getSQLState == PSQL_STATE_RELATION_NOT_FOUND => TableNotFound(ex.getMessage)
+    case ex: SQLException if connectionErrors.contains(ex.getSQLState)        => ConnectionError(ex)
+    case ex: SQLException                                                     => ErrorWithMessage(s"[${ex.getSQLState}] - ${ex.getMessage}")
+    case ex: Exception                                                        => ErrorWithMessage(ex.getMessage)
   }
 
   protected def eitherErrorHandler[T](): PartialFunction[Throwable, Either[ConnectorError, T]] =
