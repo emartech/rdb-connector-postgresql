@@ -1,30 +1,51 @@
 package com.emarsys.rdb.connector.postgresql
 
-import java.sql.SQLException
+import java.util.concurrent.RejectedExecutionException
 
-import com.emarsys.rdb.connector.common.models.Errors.{ConnectorError, ErrorWithMessage}
-import org.scalatest.{Matchers, PrivateMethodTester, WordSpecLike}
+import com.emarsys.rdb.connector.common.models.Errors.{
+  ConnectionError,
+  ErrorWithMessage,
+  SqlSyntaxError,
+  TooManyQueries
+}
+import org.postgresql.util.{PSQLException, PSQLState}
 import org.scalatest.mockito.MockitoSugar
-
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import org.scalatest.{Matchers, PrivateMethodTester, WordSpecLike}
 
 class PostgreSqlErrorHandlingSpec extends WordSpecLike with Matchers with MockitoSugar with PrivateMethodTester {
 
-  "ErrorHandling" should {
+  "PostgreSqlErrorHandling" should {
 
-    "handle unexpected SqlException" in {
+    val unableToConnectException      = new PSQLException("", PSQLState.CONNECTION_UNABLE_TO_CONNECT)
+    val invalidAuthorizationException = new PSQLException("msg", PSQLState.INVALID_AUTHORIZATION_SPECIFICATION)
+    val connectionFailureException    = new PSQLException("msg", PSQLState.CONNECTION_FAILURE)
 
-      implicit val executionContext = concurrent.ExecutionContext.Implicits.global
-
-      val eitherErrorHandler =
-        PrivateMethod[PartialFunction[Throwable, Either[ConnectorError, String]]]('eitherErrorHandler)
-      val handler        = new PostgreSqlErrorHandling {}
-      val unknownFailure = new SQLException("not-handled-message", "not-handled-state", new Exception(""))
-      val timeout        = 1.second
-
-      Await.result(Future.failed(unknownFailure).recover(handler invokePrivate eitherErrorHandler()), timeout) shouldBe
-        Left(ErrorWithMessage("[not-handled-state] - not-handled-message"))
+    Seq(
+      ("syntax error", "SqlSyntaxError", new PSQLException("msg", PSQLState.SYNTAX_ERROR), SqlSyntaxError("msg")),
+      (
+        "unable to connect error",
+        "ConnectionError",
+        unableToConnectException,
+        ConnectionError(unableToConnectException)
+      ),
+      (
+        "invalid authorization error",
+        "ConnectionError",
+        invalidAuthorizationException,
+        ConnectionError(invalidAuthorizationException)
+      ),
+      (
+        "connection failure error",
+        "ConnectionError",
+        connectionFailureException,
+        ConnectionError(connectionFailureException)
+      ),
+      ("RejectedExecutionException", "TooManyQueries", new RejectedExecutionException, TooManyQueries),
+      ("unidentified exception", "ErrorWithMessage", new Exception("msg"), ErrorWithMessage("msg"))
+    ).foreach { test =>
+      s"convert ${test._1} to ${test._2}" in new PostgreSqlErrorHandling {
+        eitherErrorHandler.apply(test._3) shouldEqual Left(test._4)
+      }
     }
   }
 }
