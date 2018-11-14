@@ -40,7 +40,7 @@ class PostgreSqlErrorHandlingSpec extends WordSpecLike with Matchers with Mockit
         connectionFailureException,
         ConnectionError(connectionFailureException)
       ),
-      ("RejectedExecutionException", "TooManyQueries", new RejectedExecutionException, TooManyQueries),
+      ("RejectedExecutionException", "TooManyQueries", new RejectedExecutionException("msg"), TooManyQueries("msg")),
       ("unidentified exception", "ErrorWithMessage", new Exception("msg"), ErrorWithMessage("msg"))
     ).foreach { test =>
       s"convert ${test._1} to ${test._2}" in new PostgreSqlErrorHandling {
